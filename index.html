@@ -3,8 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rhyme Time</title>
-  <meta name="description" content="A daily word game — find all the rhymes!" />
+  <title>Rhyme Time — A Daily Word Game</title>
+  <meta name="description" content="A daily word game — find all the rhymes! New puzzle every day." />
+  <!-- Open Graph / Social Sharing -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Rhyme Time — A Daily Word Game" />
+  <meta property="og:description" content="Find all the rhymes! A new puzzle every day. How many can you get?" />
+  <meta property="og:image" content="https://rhymetime.gg/og-image.png" />
+  <meta property="og:url" content="https://rhymetime.gg" />
+  <meta property="og:site_name" content="Rhyme Time" />
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Rhyme Time — A Daily Word Game" />
+  <meta name="twitter:description" content="Find all the rhymes! A new puzzle every day." />
+  <meta name="twitter:image" content="https://rhymetime.gg/og-image.png" />
+  <!-- iMessage / general -->
+  <meta name="apple-mobile-web-app-title" content="Rhyme Time" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Instrument+Serif&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -43,58 +57,62 @@
 
     // ─── PUZZLE DATA ─────────────────────────────────────────────────────
     const PUZZLES = [
-      { target: "cat", rhymes: ["acrobat","bat","brat","chat","combat","democrat","diplomat","doormat","fat","flat","format","habitat","hat","mat","pat","rat","sat","slat","splat","tat","that","thermostat","vat"] },
-      { target: "light", rhymes: ["appetite","bite","bright","daylight","delight","despite","dynamite","excite","fight","flashlight","flight","fright","height","ignite","invite","kite","knight","midnight","might","moonlight","night","oversight","parasite","plight","polite","quite","recite","right","satellite","sight","site","slight","spite","spotlight","sunlight","tight","tonight","unite","upright","white","write"] },
-      { target: "rain", rhymes: ["abstain","brain","campaign","chain","champagne","complain","contain","crane","detain","domain","drain","entertain","explain","gain","grain","humane","insane","lane","main","maintain","obtain","ordain","pain","pertain","plain","plane","refrain","remain","restrain","retain","sane","slain","sprain","stain","strain","sustain","terrain","train","vain","vane"] },
-      { target: "lake", rhymes: ["ache","awake","bake","brake","break","cake","drake","earthquake","fake","flake","handshake","make","mistake","opaque","overtake","partake","quake","rake","sake","shake","snake","snowflake","stake","steak","take","undertake","wake"] },
-      { target: "day", rhymes: ["array","away","ballet","bay","betray","birthday","bouquet","buffet","cafe","clay","convey","crochet","decay","delay","dismay","display","essay","everyday","filet","gateway","getaway","gray","halfway","hallway","hay","hey","highway","holiday","hooray","lay","may","obey","okay","pathway","pay","play","portray","pray","ray","relay","repay","runway","say","sleigh","spray","stay","stray","survey","sway","today","tray","way","weigh","yesterday"] },
-      { target: "cold", rhymes: ["behold","blindfold","bold","controlled","enfold","fold","gold","hold","household","manifold","marigold","mold","old","rolled","sold","told","unfold","uphold","withhold"] },
-      { target: "jump", rhymes: ["bump","clump","dump","grump","hump","lump","plump","pump","slump","stump","thump","trump"] },
-      { target: "dream", rhymes: ["beam","cream","downstream","esteem","extreme","gleam","mainstream","moonbeam","redeem","regime","scheme","scream","seam","seem","steam","stream","sunbeam","supreme","team","theme","upstream"] },
-      { target: "best", rhymes: ["addressed","arrest","assessed","attest","blessed","breast","caressed","chest","compressed","confessed","contest","crest","depressed","digest","distressed","dressed","expressed","fest","finessed","guest","impressed","infest","invest","jest","lest","molest","nest","northeast","northwest","obsessed","pest","possessed","pressed","professed","protest","quest","refreshed","repressed","request","rest","southeast","southwest","stressed","suggest","suppressed","test","unrest","vest","west","zest"] },
-      { target: "ring", rhymes: ["anything","bring","cling","everything","fling","king","nothing","offspring","ping","sing","sling","something","spring","sting","string","swing","thing","wellspring","wing","wring","zing"] },
-      { target: "found", rhymes: ["abound","around","astound","background","bloodhound","bound","compound","confound","dumbfound","expound","foreground","ground","hound","mound","playground","pound","profound","rebound","renowned","round","sound","surround","underground","wound"] },
-      { target: "green", rhymes: ["bean","between","caffeine","canteen","careen","chlorine","clean","convene","cuisine","dean","demean","evergreen","figurine","foreseen","gasoline","gene","guillotine","halloween","intervene","keen","kerosene","lean","limousine","machine","magazine","marine","mean","nicotine","obscene","pristine","protein","quarantine","queen","routine","scene","screen","seen","serene","sixteen","submarine","sunscreen","tambourine","tangerine","teen","trampoline","unforeseen","vaccine","wolverine"] },
-      { target: "fear", rhymes: ["adhere","appear","austere","beer","career","cashier","cavalier","chandelier","cheer","clear","dear","deer","disappear","ear","engineer","frontier","gear","hear","here","interfere","mere","near","peer","persevere","pioneer","premiere","reappear","rear","severe","sheer","sincere","souvenir","sphere","steer","tear","volunteer","year"] },
-      { target: "block", rhymes: ["aftershock","clock","deadlock","dock","flock","gridlock","hemlock","interlock","knock","livestock","lock","mock","overstock","padlock","peacock","roadblock","rock","shamrock","shock","sock","stock","unlock"] },
-      { target: "nice", rhymes: ["advice","concise","device","dice","entice","ice","mice","paradise","precise","price","rice","sacrifice","slice","spice","splice","suffice","twice","vice"] },
-      { target: "share", rhymes: ["affair","air","anywhere","aware","bare","bear","beware","billionaire","care","chair","compare","dare","debonair","declare","despair","elsewhere","everywhere","fair","fanfare","flair","glare","hair","hardware","heir","impair","millionaire","nightmare","nowhere","pair","pear","prayer","prepare","questionnaire","rare","repair","software","solitaire","somewhere","spare","square","stare","swear","there","threadbare","unaware","underwear","warfare","wear","welfare","wheelchair","where"] },
-      { target: "pink", rhymes: ["blink","brink","clink","drink","ink","link","mink","rethink","rink","shrink","sink","stink","sync","think","wink"] },
-      { target: "space", rhymes: ["ace","base","birthplace","brace","case","chase","commonplace","database","disgrace","displace","embrace","erase","face","fireplace","grace","grimace","interface","lace","marketplace","pace","place","race","replace","staircase","suitcase","trace","workplace"] },
-      { target: "bone", rhymes: ["alone","atone","backbone","blown","clone","cologne","cone","cyclone","dethrone","disown","drone","earphone","flown","groan","grown","headphone","homegrown","hormone","known","loan","microphone","milestone","moan","outgrown","own","ozone","phone","postpone","saxophone","shown","stone","telephone","throne","tone","trombone","unknown","xylophone","zone"] },
-      { target: "song", rhymes: ["along","belong","bong","gong","lifelong","long","oblong","prolong","prong","sarong","singsong","strong","throng","wrong","yearlong"] },
-      { target: "truck", rhymes: ["awestruck","buck","chuck","cluck","duck","dumbstruck","luck","muck","pluck","potluck","puck","starstruck","struck","stuck","suck","thunderstruck","tuck","woodchuck","yuck"] },
-      { target: "deep", rhymes: ["asleep","beep","cheap","creep","heap","jeep","keep","leap","oversleep","peep","reap","seep","sheep","sleep","steep","sweep","upkeep","weep"] },
-      { target: "glue", rhymes: ["accrue","ado","bamboo","blew","blue","brew","canoe","cashew","chew","clue","construe","crew","cue","debut","dew","drew","due","few","flew","fondue","grew","hue","imbue","knew","menu","miscue","new","preview","pursue","renew","rescue","review","shampoo","shoe","stew","subdue","taboo","tattoo","threw","through","true","two","view","voodoo","who","withdrew","you","zoo"] },
-      { target: "bed", rhymes: ["ahead","behead","bread","cornbread","dead","dread","embed","farmstead","fed","figurehead","fled","forehead","gingerbread","head","homestead","infrared","instead","lead","led","misled","misread","overfed","overhead","purebred","read","red","said","shed","shred","sled","spread","thoroughbred","thread","tread","underfed","unsaid","watershed","wed","widespread"] },
-      { target: "smile", rhymes: ["aisle","beguile","bile","compile","crocodile","defile","dial","exile","fertile","file","freestyle","guile","hostile","juvenile","meanwhile","mile","missile","mobile","percentile","pile","profile","reconcile","reptile","senile","style","textile","tile","trial","versatile","vile","while","worthwhile"] },
-      { target: "name", rhymes: ["acclaim","aim","became","blame","came","claim","dame","disclaim","exclaim","fame","flame","frame","game","inflame","lame","mainframe","nickname","overcame","proclaim","reclaim","rename","same","shame","tame","timeframe"] },
-      { target: "hope", rhymes: ["antelope","cope","dope","envelope","grope","horoscope","kaleidoscope","microscope","mope","nope","periscope","pope","rope","scope","slope","telescope","tightrope"] },
-      { target: "beach", rhymes: ["beseech","bleach","breach","each","impeach","leach","outreach","overreach","peach","preach","reach","screech","speech","teach"] },
-      { target: "note", rhymes: ["anecdote","antidote","bloat","boat","coat","denote","devote","dote","float","footnote","gloat","goat","lifeboat","moat","overcoat","promote","quote","remote","sailboat","scapegoat","speedboat","steamboat","throat","topcoat","tote","tugboat","turncoat","undercoat","vote","wrote"] },
-      { target: "cloud", rhymes: ["allowed","aloud","avowed","bowed","crowd","endowed","enshroud","loud","plowed","proud","shroud","thundercloud","vowed"] },
-      { target: "steel", rhymes: ["appeal","conceal","congeal","deal","eel","feel","heal","heel","ideal","kneel","meal","ordeal","peal","peel","real","reel","repeal","reveal","seal","steal","surreal","unreal","veal","wheel","zeal"] },
-      { target: "book", rhymes: ["brook","cook","crook","handbook","hook","look","mistook","nook","notebook","outlook","overlook","rook","shook","textbook","took","undertook","yearbook"] },
-      { target: "born", rhymes: ["acorn","adorn","corn","firstborn","forlorn","horn","lovelorn","mourn","newborn","popcorn","scorn","sworn","thorn","torn","unborn","unicorn","warn","worn"] },
-      { target: "gold", rhymes: ["behold","blindfold","bold","cold","controlled","enfold","fold","hold","household","manifold","mold","old","rolled","sold","told","unfold","uphold","withhold"] },
-      { target: "peak", rhymes: ["antique","beak","bleak","boutique","cheek","chic","creek","critique","discreet","freak","geek","leak","meek","mystique","oblique","physique","reek","seek","sleek","sneak","speak","squeak","streak","technique","tweak","unique","weak","week"] },
-      { target: "dust", rhymes: ["adjust","bust","combust","crust","discussed","disgust","distrust","encrust","entrust","gust","just","lust","mistrust","must","readjust","robust","rust","stardust","thrust","trust","unjust","wanderlust"] },
-      { target: "moon", rhymes: ["afternoon","baboon","balloon","bassoon","bedroom","bloom","boom","boon","bridegroom","cartoon","classroom","cocoon","costume","doom","gloom","groom","harpoon","honeymoon","immune","lagoon","loom","maroon","monsoon","mushroom","noon","platoon","pontoon","prune","raccoon","room","saloon","soon","spoon","swoon","tablespoon","tune","typhoon","zoom"] },
+      { target: "cat", rhymes: ["acrobat","at","bat","brat","chat","combat","democrat","diplomat","doormat","fat","flat","format","gnat","habitat","hat","mat","pat","rat","sat","scat","slat","spat","splat","stat","tat","that","thermostat","vat"] },
+      { target: "light", rhymes: ["appetite","birthright","bite","blight","bright","cite","copyright","daylight","delight","despite","downright","dynamite","excite","fight","flashlight","flight","foresight","forthright","fright","height","highlight","hindsight","ignite","invite","kite","knight","limelight","midnight","might","mite","moonlight","night","outright","oversight","parasite","plight","polite","quite","recite","rewrite","right","rite","satellite","sight","site","slight","smite","spite","spotlight","sunlight","tight","tonight","trite","twilight","unite","upright","white","write"] },
+      { target: "rain", rhymes: ["abstain","arcane","bane","brain","campaign","cane","chain","champagne","cocaine","complain","contain","crane","detain","disdain","domain","drain","entertain","explain","feign","gain","grain","humane","inane","insane","lane","main","maintain","mane","membrane","migraine","mundane","obtain","ordain","pain","pane","pertain","plain","plane","profane","propane","refrain","reign","rein","remain","restrain","retain","sane","slain","sprain","stain","strain","sustain","terrain","train","urbane","vain","vane","wane"] },
+      { target: "lake", rhymes: ["ache","awake","bake","brake","break","cake","drake","earthquake","fake","flake","forsake","handshake","intake","keepsake","make","mistake","namesake","opaque","overtake","partake","quake","rake","remake","retake","sake","shake","snake","snowflake","stake","steak","take","undertake","uptake","wake"] },
+      { target: "day", rhymes: ["array","astray","away","ballet","bay","beret","betray","birthday","bouquet","bray","buffet","cafe","clay","convey","crochet","decay","defray","delay","dismay","display","essay","everyday","filet","fray","gateway","gay","getaway","gourmet","gray","grey","halfway","hallway","hay","hey","heyday","highway","holiday","hooray","jay","lay","may","midway","nay","neigh","obey","okay","pathway","pay","play","portray","pray","prey","ray","relay","repay","runway","say","slay","sleigh","spray","stay","stray","survey","sway","they","today","tray","valet","way","weekday","weigh","whey","workday","yesterday"] },
+      { target: "cold", rhymes: ["behold","blindfold","bold","controlled","enfold","fold","foretold","gold","hold","household","manifold","marigold","mold","old","retold","rolled","sold","told","twofold","unfold","untold","uphold","withhold"] },
+      { target: "jump", rhymes: ["bump","chump","clump","dump","frump","grump","hump","lump","plump","pump","rump","slump","stump","thump","trump"] },
+      { target: "dream", rhymes: ["beam","cream","daydream","deem","downstream","esteem","extreme","gleam","mainstream","moonbeam","ream","redeem","regime","scheme","scream","seam","seem","steam","stream","sunbeam","supreme","team","teem","theme","upstream"] },
+      { target: "best", rhymes: ["abreast","addressed","armrest","arrest","assessed","attest","backrest","bequest","blessed","breast","caressed","chest","coalesced","compressed","confessed","contest","crest","depressed","detest","digest","distressed","divest","dressed","expressed","fest","finessed","footrest","guest","headrest","impressed","infest","inquest","invest","jest","lest","molest","nest","northeast","northwest","obsessed","pest","possessed","pressed","professed","protest","quest","refreshed","reinvest","repressed","request","rest","southeast","southwest","stressed","suggest","suppressed","test","undressed","unrest","vest","west","zest"] },
+      { target: "ring", rhymes: ["anything","bling","bring","cling","ding","drawstring","everything","fling","hamstring","heartstring","king","nothing","offspring","ping","plaything","sing","sling","something","spring","sting","string","swing","thing","upswing","wellspring","wing","wring","zing"] },
+      { target: "found", rhymes: ["abound","around","astound","background","battleground","bloodhound","bound","campground","compound","confound","dumbfound","earthbound","expound","foreground","greyhound","ground","homebound","hound","inbound","mound","outbound","playground","pound","profound","rebound","renowned","round","sound","spellbound","surround","underground","wound"] },
+      { target: "green", rhymes: ["aquamarine","bean","between","caffeine","canteen","careen","chlorine","clean","convene","cuisine","dean","demean","evergreen","figurine","foreseen","gasoline","gene","guillotine","halloween","intervene","keen","kerosene","lean","limousine","machine","magazine","marine","mean","mezzanine","nectarine","nicotine","obscene","preen","pristine","protein","quarantine","queen","routine","scene","screen","seen","serene","serpentine","sheen","sixteen","spleen","submarine","sunscreen","tambourine","tangerine","teen","trampoline","unforeseen","vaccine","wean","wolverine"] },
+      { target: "fear", rhymes: ["adhere","appear","auctioneer","austere","beer","bier","buccaneer","career","cashier","cavalier","chandelier","cheer","clear","dear","deer","disappear","domineer","ear","engineer","frontier","gear","gondolier","hear","here","interfere","jeer","leer","mere","mountaineer","musketeer","near","peer","persevere","pioneer","premiere","profiteer","racketeer","reappear","rear","sear","severe","sheer","sincere","smear","sneer","souvenir","spear","sphere","steer","tear","veer","veneer","volunteer","year"] },
+      { target: "block", rhymes: ["aftershock","bedrock","clock","cock","crock","deadlock","dock","flintlock","flock","gridlock","hemlock","interlock","jock","knock","laughingstock","livestock","lock","mock","overstock","padlock","peacock","roadblock","rock","shamrock","shock","smock","sock","stock","unlock","warlock","wok"] },
+      { target: "nice", rhymes: ["advice","concise","device","dice","entice","excise","ice","lice","mice","paradise","precise","price","rice","sacrifice","slice","spice","splice","suffice","thrice","twice","vice"] },
+      { target: "share", rhymes: ["affair","air","anywhere","armchair","aware","bare","bear","beware","billionaire","blare","care","chair","compare","dare","debonair","declare","despair","eclair","elsewhere","everywhere","fair","fanfare","flair","flare","glare","hair","hardware","hare","heir","impair","lair","mare","midair","millionaire","nightmare","nowhere","pair","pear","prayer","prepare","questionnaire","rare","repair","snare","software","solitaire","somewhere","spare","square","stare","swear","there","thoroughfare","threadbare","unaware","underwear","warfare","wear","welfare","wheelchair","where"] },
+      { target: "pink", rhymes: ["blink","brink","chink","clink","drink","fink","hoodwink","ink","kink","link","mink","rethink","rink","shrink","sink","slink","stink","sync","think","wink","zinc"] },
+      { target: "space", rhymes: ["ace","aerospace","base","birthplace","brace","case","chase","commonplace","cyberspace","database","debase","deface","disgrace","displace","embrace","erase","face","fireplace","grace","grimace","interface","interlace","lace","marketplace","misplace","necklace","pace","place","race","replace","retrace","shoelace","staircase","suitcase","trace","workplace"] },
+      { target: "bone", rhymes: ["alone","atone","backbone","baritone","blown","clone","cologne","cone","crone","cyclone","dethrone","disown","drone","earphone","flown","groan","grown","headphone","homegrown","hone","hormone","known","loan","lone","megaphone","microphone","milestone","moan","monotone","outgrown","overthrown","own","ozone","phone","postpone","prone","saxophone","semitone","sewn","shown","silicone","sown","stone","telephone","throne","thrown","tone","trombone","undertone","unknown","xylophone","zone"] },
+      { target: "song", rhymes: ["along","belong","bong","dong","gong","lifelong","long","oblong","pong","prolong","prong","sarong","singalong","singsong","strong","throng","tong","wrong","yearlong"] },
+      { target: "truck", rhymes: ["amuck","awestruck","buck","chuck","cluck","duck","dumbstruck","luck","muck","pluck","potluck","puck","ruck","schmuck","shuck","snuck","starstruck","struck","stuck","suck","thunderstruck","tuck","woodchuck","yuck"] },
+      { target: "deep", rhymes: ["asleep","beep","bleep","cheap","creep","heap","jeep","keep","leap","oversleep","peep","reap","seep","sheep","sleep","steep","sweep","upkeep","weep"] },
+      { target: "glue", rhymes: ["accrue","adieu","ado","anew","askew","bamboo","blew","blue","boo","brew","canoe","cashew","chew","clue","construe","coo","crew","cue","debut","dew","drew","due","ensue","few","flew","fondue","goo","grew","hue","imbue","interview","kangaroo","knew","menu","miscue","moo","new","outdo","overdue","pew","preview","pursue","queue","redo","renew","rescue","review","rue","shampoo","shoe","slew","stew","subdue","sue","taboo","tattoo","threw","through","true","two","undo","view","voodoo","who","withdrew","woo","you","zoo"] },
+      { target: "bed", rhymes: ["ahead","behead","bled","bread","bred","copperhead","cornbread","dead","dread","embed","farmstead","fed","figurehead","fled","forehead","gingerbread","head","homestead","infrared","instead","lead","led","misled","misread","newlywed","overfed","overhead","pled","purebred","read","red","said","shed","shred","sled","spearhead","sped","spread","ted","thoroughbred","thread","tread","underfed","unsaid","warhead","watershed","wed","widespread","zed"] },
+      { target: "smile", rhymes: ["aisle","beguile","bile","chamomile","compile","crocodile","defile","dial","domicile","exile","fertile","file","freestyle","guile","hostile","infantile","juvenile","meanwhile","mile","missile","mobile","percentile","pile","profile","projectile","reconcile","reptile","rile","senile","stockpile","style","textile","tile","trial","turnstile","versatile","vile","volatile","while","wile","worthwhile"] },
+      { target: "name", rhymes: ["acclaim","aflame","aim","became","blame","came","claim","dame","defame","disclaim","endgame","exclaim","fame","flame","frame","game","inflame","lame","maim","mainframe","nickname","overcame","proclaim","reclaim","rename","same","shame","tame","timeframe"] },
+      { target: "hope", rhymes: ["antelope","cantaloupe","cope","dope","elope","envelope","grope","gyroscope","horoscope","isotope","kaleidoscope","lope","microscope","misanthrope","mope","nope","periscope","pope","rope","scope","slope","stethoscope","telescope","tightrope"] },
+      { target: "beach", rhymes: ["beech","beseech","bleach","breach","breech","each","impeach","leach","leech","outreach","overreach","peach","preach","reach","screech","speech","teach"] },
+      { target: "note", rhymes: ["afloat","anecdote","antidote","bloat","boat","coat","cutthroat","denote","devote","dote","float","footnote","gloat","goat","keynote","lifeboat","misquote","moat","mote","oat","overcoat","petticoat","promote","quote","raincoat","remote","rote","sailboat","scapegoat","smote","speedboat","steamboat","sugarcoat","throat","topcoat","tote","tugboat","turncoat","undercoat","vote","wrote"] },
+      { target: "cloud", rhymes: ["allowed","aloud","avowed","bowed","cowed","crowd","disallowed","endowed","enshroud","loud","plowed","proud","shroud","thundercloud","vowed","wowed"] },
+      { target: "steel", rhymes: ["appeal","cartwheel","conceal","congeal","creel","deal","eel","feel","flywheel","genteel","heal","heel","ideal","keel","kneel","meal","ordeal","peal","peel","pinwheel","real","reel","repeal","reveal","seal","spiel","steal","surreal","teal","unreal","veal","weal","wheel","zeal"] },
+      { target: "book", rhymes: ["brook","checkbook","cook","cookbook","crook","guidebook","handbook","hook","logbook","look","mistook","nook","notebook","outlook","overbook","overlook","pocketbook","rook","scrapbook","shook","storybook","textbook","took","undertook","yearbook"] },
+      { target: "born", rhymes: ["acorn","adorn","airborne","corn","firstborn","foghorn","forlorn","horn","longhorn","lovelorn","mourn","newborn","popcorn","reborn","scorn","shoehorn","shorn","sworn","thorn","torn","unborn","unicorn","warn","waterborne","worn"] },
+      { target: "gold", rhymes: ["bankrolled","behold","blindfold","bold","cajoled","cold","controlled","enfold","extolled","fold","hold","household","manifold","mold","old","rolled","sold","told","unfold","uphold","withhold"] },
+      { target: "peak", rhymes: ["antique","beak","bleak","boutique","cheek","chic","creak","creek","critique","discreet","freak","geek","greek","leak","meek","midweek","mystique","oblique","physique","pique","reek","seek","sheik","shriek","sleek","sneak","speak","squeak","streak","teak","technique","tweak","unique","weak","week","wreak"] },
+      { target: "dust", rhymes: ["adjust","bloodlust","bust","combust","crust","discussed","disgust","distrust","encrust","entrust","gust","just","lust","mistrust","must","nonplussed","readjust","robust","rust","sawdust","stardust","thrust","trust","unjust","wanderlust"] },
+      { target: "moon", rhymes: ["afternoon","baboon","balloon","bassoon","bedroom","bloom","boom","boon","bridegroom","buffoon","cartoon","classroom","cocoon","commune","costume","croon","doom","dune","festoon","gloom","goon","groom","harpoon","honeymoon","immune","lagoon","lampoon","loom","loon","macaroon","maroon","monsoon","mushroom","noon","platoon","pontoon","prune","raccoon","room","rune","saloon","soon","spoon","swoon","tablespoon","toon","tune","tycoon","typhoon","zoom"] },
       { target: "shelf", rhymes: ["bookshelf","elf","health","herself","himself","itself","myself","oneself","self","stealth","thyself","wealth","yourself"] },
-      { target: "ball", rhymes: ["all","appall","baseball","basketball","brawl","call","cannonball","crawl","downfall","enthrall","eyeball","fall","football","freefall","hall","handball","haul","install","mall","nightfall","overall","overhaul","rainfall","recall","shawl","small","snowball","sprawl","stall","tall","wall","waterfall","windfall"] },
-      { target: "seed", rhymes: ["agreed","bleed","breed","concede","creed","decreed","deed","exceed","feed","freed","greed","guaranteed","heed","indeed","intercede","need","plead","precede","proceed","read","reed","speed","stampede","steed","succeed","supersede","weed"] },
-      { target: "grade", rhymes: ["afraid","aid","arcade","barricade","blade","blockade","braid","cascade","charade","crusade","decade","evade","facade","fade","glade","grenade","handmade","homemade","invade","jade","laid","lemonade","maid","marinade","masquerade","mermaid","paid","parade","persuade","promenade","raid","renegade","serenade","shade","spade","stockade","tirade","trade","unpaid","upgrade","wade"] },
-      { target: "stone", rhymes: ["alone","atone","backbone","blown","bone","clone","cobblestone","cologne","cone","cornerstone","cyclone","dethrone","drone","earphone","flagstone","flown","gemstone","gravestone","grindstone","groan","grown","headphone","homegrown","hormone","keystone","known","limestone","loan","microphone","milestone","moan","moonstone","outgrown","own","ozone","phone","postpone","rhinestone","sandstone","saxophone","shown","telephone","throne","tombstone","tone","trombone","unknown","zone"] },
-      { target: "pile", rhymes: ["aisle","beguile","bile","compile","crocodile","defile","dial","exile","file","freestyle","guile","hostile","juvenile","meanwhile","mile","missile","mobile","percentile","profile","reconcile","reptile","smile","style","textile","tile","trial","versatile","vile","while","worthwhile"] },
-      { target: "match", rhymes: ["attach","batch","catch","detach","dispatch","hatch","latch","mismatch","patch","rematch","scratch","snatch","thatch","unattached"] },
-      { target: "drill", rhymes: ["bill","chill","dill","distill","downhill","fill","frill","fulfill","goodwill","grill","hill","ill","instill","kill","landfill","mill","overkill","pill","refill","skill","spill","standstill","still","thrill","till","treadmill","uphill","will","windmill"] },
-      { target: "maze", rhymes: ["ablaze","always","amaze","appraise","blaze","craze","days","daze","displays","gaze","glaze","graze","haze","holidays","laze","malaise","nowadays","paraphrase","phase","phrase","plays","praise","raise","rays","repays","stays","surveys","ways"] },
-      { target: "sail", rhymes: ["ale","avail","bail","bewail","blackmail","cocktail","curtail","dale","derail","detail","email","exhale","fail","female","fingernail","frail","gale","guardrail","hail","handrail","inhale","jail","mail","male","monorail","nail","nightingale","pail","pale","pigtail","ponytail","prevail","rail","retail","scale","snail","stale","tail","tale","toenail","trail","unveil","veil","wail","whale","wholesale"] },
-      { target: "fun", rhymes: ["begun","bun","done","gun","homespun","hon","none","nun","one","outdone","outrun","overcome","overrun","pun","rerun","run","someone","son","spun","stun","sun","ton","undone","won"] },
-      { target: "town", rhymes: ["breakdown","brown","clown","countdown","crown","down","downtown","drown","frown","gown","letdown","lockdown","meltdown","noun","renown","showdown","shutdown","sundown","touchdown","turndown","uptown"] },
-      { target: "wave", rhymes: ["behave","brave","cave","concave","crave","deprave","engrave","enslave","forgave","gave","grave","knave","microwave","misbehave","octave","pave","rave","save","shave","shockwave","slave"] }    ];
+      { target: "ball", rhymes: ["all","appall","baseball","basketball","bawl","befall","brawl","call","cannonball","catcall","crawl","downfall","drawl","enthrall","eyeball","fall","fireball","football","footfall","freefall","gall","hall","handball","haul","install","mall","maul","meatball","mothball","nightfall","overall","overhaul","pall","pinball","pitfall","protocol","rainfall","recall","scrawl","shawl","small","snowball","sprawl","squall","stall","tall","trawl","volleyball","wall","waterfall","windfall"] },
+      { target: "seed", rhymes: ["accede","agreed","bead","bleed","breed","cede","centipede","concede","creed","decreed","deed","exceed","feed","freed","greed","guaranteed","heed","impede","indeed","intercede","knead","mead","mislead","need","pedigree","plead","precede","proceed","read","recede","reed","secede","speed","stampede","steed","succeed","supersede","tweed","weed"] },
+      { target: "grade", rhymes: ["accolade","afraid","aid","arcade","bade","barricade","blade","blockade","braid","cascade","charade","colonnade","crusade","decade","escapade","evade","facade","fade","glade","grenade","handmade","homemade","invade","jade","laid","lemonade","made","maid","marinade","marmalade","masquerade","mermaid","motorcade","paid","parade","persuade","promenade","raid","renegade","retrograde","serenade","shade","spade","stockade","switchblade","tirade","trade","unpaid","upgrade","wade"] },
+      { target: "stone", rhymes: ["alone","atone","backbone","baritone","blown","bone","capstone","clone","cobblestone","cologne","cone","cornerstone","crone","curbstone","cyclone","dethrone","drone","earphone","flagstone","flown","gallstone","gemstone","gravestone","grindstone","groan","grown","headphone","hearthstone","homegrown","hone","hormone","keystone","known","limestone","loan","lone","microphone","milestone","moan","monotone","moonstone","outgrown","overtone","own","ozone","phone","postpone","prone","rhinestone","sandstone","saxophone","semitone","sewn","shown","telephone","throne","thrown","tombstone","tone","touchstone","trombone","undertone","unknown","zone"] },
+      { target: "pile", rhymes: ["agile","aisle","argyle","beguile","bile","chamomile","compile","crocodile","defile","dial","domicile","exile","file","fragile","freestyle","futile","guile","hostile","juvenile","meanwhile","mercantile","mile","missile","mobile","percentile","profile","projectile","reconcile","reptile","rile","smile","stile","stockpile","style","textile","tile","trial","turnstile","versatile","vile","volatile","while","wile","worthwhile"] },
+      { target: "match", rhymes: ["attach","batch","catch","crosshatch","detach","dispatch","hatch","latch","mismatch","overmatch","patch","rematch","scratch","snatch","thatch","unattached"] },
+      { target: "drill", rhymes: ["anthill","bill","chill","chlorophyll","daffodil","dill","distill","downhill","fill","frill","fulfill","gill","goodwill","grill","hill","ill","instill","kill","landfill","mill","nil","overkill","pill","quill","refill","rill","roadkill","shill","shrill","sill","skill","spill","standstill","still","swill","thrill","till","treadmill","trill","twill","uphill","will","windmill","windowsill"] },
+      { target: "maze", rhymes: ["ablaze","always","amaze","appraise","blaze","craze","days","daze","displays","faze","gaze","glaze","graze","haze","holidays","laze","malaise","mayonnaise","nowadays","paraphrase","phase","phrase","plays","praise","raise","rays","raze","repays","rephrase","stays","surveys","ways"] },
+      { target: "sail", rhymes: ["ail","ale","avail","bail","bale","bewail","blackmail","braille","cocktail","curtail","dale","derail","detail","dovetail","email","entail","exhale","fail","fantail","female","fingernail","flail","frail","gale","grail","guardrail","hail","handrail","impale","inhale","jail","mail","male","monorail","nail","nightingale","pail","pale","pigtail","ponytail","prevail","rail","retail","sale","scale","shale","snail","stale","tail","tale","thumbnail","toenail","trail","travail","unveil","vale","veil","wail","whale","wholesale"] },
+      { target: "fun", rhymes: ["begun","bun","done","dun","gun","homespun","hon","hun","none","nun","one","outdone","outgun","outrun","overcome","overrun","pun","rerun","run","shotgun","shun","someone","son","spun","stun","sun","ton","undone","won"] },
+      { target: "town", rhymes: ["breakdown","brown","clown","countdown","crackdown","crown","down","downtown","drown","frown","gown","hoedown","knockdown","letdown","lockdown","lowdown","markdown","meltdown","noun","renown","rundown","shakedown","showdown","shutdown","slowdown","sundown","touchdown","turndown","uptown"] },
+      { target: "wave", rhymes: ["aftershave","airwave","behave","brainwave","brave","cave","concave","crave","deprave","engrave","enslave","forgave","gave","grave","knave","lave","microwave","misbehave","nave","octave","pave","rave","save","shave","shockwave","shortwave","slave","stave","waive"] }
+    ];
 
-    // ─── RANKS ───────────────────────────────────────────────────────────
+    // ─── CONSTANTS ───────────────────────────────────────────────────────
+    const EPOCH = 20493; // Feb 9, 2026 = Puzzle #1
+    const MAX_HINTS = 3;
+
     const RANKS = [
       { name: "Beginner", threshold: 0 },
       { name: "Good Start", threshold: 0.05 },
@@ -129,6 +147,10 @@
     function puzzleForDay(offset = 0) {
       const d = dayNum() + offset;
       return PUZZLES[Math.floor(seeded(d + 42) * PUZZLES.length) % PUZZLES.length];
+    }
+
+    function puzzleNumber(offset = 0) {
+      return Math.max(1, dayNum() + offset - EPOCH + 1);
     }
 
     function dateStr(offset = 0) {
@@ -187,23 +209,29 @@
       );
     }
 
-    // SVG icons (cleaner than emoji)
     const Icons = {
       yesterday: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 8 14"/></svg>,
       stats: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="6" width="4" height="15"/><rect x="17" y="2" width="4" height="19"/></svg>,
       ranks: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9l6-6 6 6"/><path d="M12 3v18"/></svg>,
       help: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 115.12 2.13c-.67.56-1.12 1.2-1.12 1.87v1"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg>,
+      hint: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 014 12.7V17H8v-2.3A7 7 0 0112 2z"/></svg>,
     };
 
     // ─── MAIN APP ────────────────────────────────────────────────────────
     function RhymeTime() {
       const puzzle = useMemo(() => puzzleForDay(0), []);
       const yPuzzle = useMemo(() => puzzleForDay(-1), []);
+      const pNum = useMemo(() => puzzleNumber(0), []);
+      const yNum = useMemo(() => puzzleNumber(-1), []);
       const maxPts = useMemo(() => puzzle.rhymes.reduce((a, w) => a + w.length, 0), [puzzle]);
 
       const [found, setFound] = useState(() => {
         const saved = LS.get(gameKey());
         return (saved?.found && saved?.target === puzzle.target) ? saved.found : [];
+      });
+      const [hintsUsed, setHintsUsed] = useState(() => {
+        const saved = LS.get(gameKey());
+        return (saved?.hints && saved?.target === puzzle.target) ? saved.hints : [];
       });
       const [input, setInput] = useState("");
       const [msg, setMsg] = useState(null);
@@ -212,12 +240,12 @@
       const [modal, setModal] = useState(null);
       const [copied, setCopied] = useState(false);
       const [celebrate, setCelebrate] = useState(null);
-      const [stats, setStats] = useState(() => LS.get("rt-stats-v1") || DEF_STATS);
+      const [stats, setStats] = useState(() => LS.get("rt-stats-v2") || DEF_STATS);
       const [yFound] = useState(() => {
         const saved = LS.get(gameKey(-1));
         return (saved?.found && saved?.target === yPuzzle.target) ? saved.found : [];
       });
-      const ref = useRef(null);
+      const inputRef = useRef(null);
       const prevRank = useRef(null);
       const msgT = useRef(null);
       const recorded = useRef(false);
@@ -226,9 +254,15 @@
       const rank = getRank(pts, maxPts);
       const pct = maxPts > 0 ? (pts / maxPts) * 100 : 0;
       const done = found.length === puzzle.rhymes.length;
+      const hintsLeft = MAX_HINTS - hintsUsed.length;
 
-      useEffect(() => { if (found.length > 0) LS.set(gameKey(), { found, target: puzzle.target, ts: Date.now() }); }, [found]);
+      // Save game state
+      useEffect(() => {
+        if (found.length > 0 || hintsUsed.length > 0)
+          LS.set(gameKey(), { found, hints: hintsUsed, target: puzzle.target, ts: Date.now() });
+      }, [found, hintsUsed]);
 
+      // Rank-up celebration
       useEffect(() => {
         if (prevRank.current && prevRank.current !== rank.name && rank.name !== "Beginner") {
           setCelebrate(rank.name);
@@ -237,11 +271,12 @@
         prevRank.current = rank.name;
       }, [rank]);
 
+      // Record stats
       useEffect(() => {
         if (recorded.current) return;
         if (done || rank.name === "Genius") {
           recorded.current = true;
-          const s = LS.get("rt-stats-v1") || { ...DEF_STATS };
+          const s = LS.get("rt-stats-v2") || { ...DEF_STATS };
           const today = dayNum();
           if (s.lastDay === today) return;
           s.games++; if (done) s.wins++;
@@ -249,7 +284,7 @@
           s.streak = s.lastDay === today - 1 ? s.streak + 1 : 1;
           s.maxStreak = Math.max(s.maxStreak, s.streak);
           s.lastDay = today;
-          setStats(s); LS.set("rt-stats-v1", s);
+          setStats(s); LS.set("rt-stats-v2", s);
         }
       }, [done, rank]);
 
@@ -269,11 +304,26 @@
           flash(`+${g.length} pts — "${g}" ✓`, "ok");
           if (found.length + 1 === puzzle.rhymes.length) setTimeout(() => flash("🎉 You found them all!", "ok", 5000), 600);
         } else { flash(`"${g}" — not in the list`, "err"); setShake(true); setTimeout(() => setShake(false), 500); }
-        ref.current?.focus();
+        inputRef.current?.focus();
       }, [input, found, puzzle, flash]);
 
+      // ─── HINT SYSTEM ───────────────────────────────────────────────────
+      const useHint = useCallback(() => {
+        const unfound = puzzle.rhymes.filter(w => !found.includes(w) && !hintsUsed.includes(w));
+        if (unfound.length === 0 || hintsLeft <= 0) return;
+        const word = unfound[Math.floor(Math.random() * unfound.length)];
+        const firstLetter = word[0].toUpperCase();
+        const len = word.length;
+        setHintsUsed(prev => [...prev, word]);
+        flash(`💡 A ${len}-letter rhyme starts with "${firstLetter}"`, "hint", 4000);
+        inputRef.current?.focus();
+      }, [puzzle, found, hintsUsed, hintsLeft, flash]);
+
+      // ─── SHARE (with puzzle # and streak) ──────────────────────────────
       const share = () => {
-        const t = `🃏 Rhyme Time — ${dateStr()}\n🎯 "${puzzle.target.toUpperCase()}"\n📊 ${found.length}/${puzzle.rhymes.length} words · ${pts}/${maxPts} pts\n${rank.name}\n\nhttps://rhymetime.gg`;
+        const streakTxt = stats.streak > 1 ? `\n🔥 ${stats.streak}-day streak` : "";
+        const hintTxt = hintsUsed.length > 0 ? ` (${hintsUsed.length} hint${hintsUsed.length > 1 ? "s" : ""})` : "";
+        const t = `🃏 Rhyme Time #${pNum}\n🎯 "${puzzle.target.toUpperCase()}"\n📊 ${found.length}/${puzzle.rhymes.length} words · ${pts}/${maxPts} pts${hintTxt}\n${rank.name}${streakTxt}\n\nhttps://rhymetime.gg`;
         navigator.clipboard.writeText(t).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2500); });
       };
 
@@ -287,11 +337,20 @@
               <div style={S.brand}>
                 <Logo size={36} />
                 <div>
-                  <h1 style={S.title}>Rhyme Time</h1>
+                  <div style={{display: "flex", alignItems: "baseline", gap: 8}}>
+                    <h1 style={S.title}>Rhyme Time</h1>
+                    <span style={S.puzzleNum}>#{pNum}</span>
+                  </div>
                   <p style={S.subtitle}>{dateStr()}</p>
                 </div>
               </div>
-              <nav style={S.nav}>
+              <nav style={{display: "flex", alignItems: "center", gap: 2}}>
+                {stats.streak > 0 && (
+                  <div style={S.streakBadge} title={`${stats.streak}-day streak`}>
+                    <span style={{fontSize: 14}}>🔥</span>
+                    <span>{stats.streak}</span>
+                  </div>
+                )}
                 <NavIcon onClick={() => setModal("yesterday")} title="Yesterday">{Icons.yesterday}</NavIcon>
                 <NavIcon onClick={() => setModal("stats")} title="Stats">{Icons.stats}</NavIcon>
                 <NavIcon onClick={() => setModal("ranks")} title="Rankings">{Icons.ranks}</NavIcon>
@@ -325,7 +384,7 @@
 
             {/* ─── TOAST ─── */}
             {msg && <div style={{...S.toast,
-              background: msgType === "ok" ? "#059669" : msgType === "err" ? "#DC2626" : msgType === "warn" ? "#D97706" : "#6B7280"
+              background: msgType === "ok" ? "#059669" : msgType === "err" ? "#DC2626" : msgType === "warn" ? "#D97706" : msgType === "hint" ? "#6D28D9" : "#6B7280"
             }}>{msg}</div>}
 
             {/* ─── RANK CELEBRATE ─── */}
@@ -333,7 +392,7 @@
 
             {/* ─── INPUT ─── */}
             <div style={{...S.inputWrap, animation: shake ? "shake 0.4s ease" : "none"}}>
-              <input ref={ref} type="text" value={input}
+              <input ref={inputRef} type="text" value={input}
                 onChange={e => setInput(e.target.value.replace(/[^a-zA-Z]/g, ""))}
                 onKeyDown={e => e.key === "Enter" && submit()}
                 placeholder={done ? "All found! 🎉" : "Type a rhyme..."}
@@ -345,7 +404,14 @@
 
             {/* ─── ACTIONS ─── */}
             <div style={S.actions}>
-              <button style={S.pill} onClick={() => { setInput(""); ref.current?.focus(); }}>Clear</button>
+              {!done && (
+                <button style={{...S.pill, ...S.hintPill, opacity: hintsLeft > 0 ? 1 : 0.4}}
+                  onClick={useHint} disabled={hintsLeft <= 0}>
+                  {Icons.hint}
+                  <span>Hint ({hintsLeft})</span>
+                </button>
+              )}
+              <button style={S.pill} onClick={() => { setInput(""); inputRef.current?.focus(); }}>Clear</button>
               <button style={S.pill} onClick={share}>{copied ? "✅ Copied!" : "Share"}</button>
               {done && <button style={{...S.pill, background: "#6D28D9", color: "#fff", borderColor: "#6D28D9"}} onClick={() => setModal("answers")}>View All</button>}
             </div>
@@ -400,6 +466,8 @@
                         ["📏", "Score points equal to the word's letter count"],
                         ["📈", "Climb 10 ranks from Beginner to Rhyme Master"],
                         ["🔤", "Multi-syllable words count — 'impressed' rhymes with 'best'"],
+                        ["💡", `Use up to ${MAX_HINTS} hints per puzzle — reveals first letter and word length`],
+                        ["🔥", "Play daily to build your streak"],
                         ["🔄", "New puzzle daily at midnight"],
                       ].map(([ic, txt], i) => (
                         <div key={i} style={S.ruleRow}><span style={{fontSize: 17, flexShrink: 0}}>{ic}</span><span>{txt}</span></div>
@@ -447,10 +515,10 @@
                   {/* STATS */}
                   {modal === "stats" && <>
                     <h2 style={S.mTitle}>Statistics</h2>
-                    <div style={{display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, marginTop: 12}}>
-                      {[["games","Played"],[stats.wins,"Wins"],[stats.streak,"Streak"],[stats.maxStreak,"Best"]].map(([v, l], i) => (
-                        <div key={i} style={{textAlign: "center", padding: "14px 6px", background: "#F9FAFB", borderRadius: 12, border: "1px solid #E5E7EB"}}>
-                          <div style={{fontSize: 26, fontWeight: 700, color: "#6D28D9"}}>{typeof v === "string" ? stats[v] : v}</div>
+                    <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12}}>
+                      {[[stats.games,"Played"],[stats.wins,"Completed"],[stats.streak,"Streak 🔥"],[stats.maxStreak,"Best Streak"]].map(([v, l], i) => (
+                        <div key={i} style={{textAlign: "center", padding: "16px 8px", background: "#F9FAFB", borderRadius: 12, border: "1px solid #E5E7EB"}}>
+                          <div style={{fontSize: 28, fontWeight: 700, color: "#6D28D9"}}>{v}</div>
                           <div style={{fontSize: 11, color: "#9CA3AF", fontWeight: 600, marginTop: 2}}>{l}</div>
                         </div>
                       ))}
@@ -480,9 +548,11 @@
                   {/* YESTERDAY */}
                   {modal === "yesterday" && <>
                     <h2 style={S.mTitle}>Yesterday's Answers</h2>
-                    <p style={{color: "#9CA3AF", fontSize: 13, marginBottom: 8}}>{dateStr(-1)}</p>
+                    <p style={{color: "#9CA3AF", fontSize: 13, marginBottom: 8}}>
+                      Puzzle #{yNum} · {dateStr(-1)}
+                    </p>
                     <div style={{textAlign: "center", margin: "10px 0 18px"}}>
-                      <div style={{fontFamily: "'Instrument Serif', serif", fontSize: 34, color: "#1a1a2e", letterSpacing: 2}}>{yPuzzle.target}</div>
+                      <div style={{fontFamily: "'DM Serif Display', serif", fontSize: 34, color: "#1a1a2e", letterSpacing: 2}}>{yPuzzle.target}</div>
                       <p style={{margin: "2px 0 0", fontSize: 12, color: "#9CA3AF"}}>{yPuzzle.rhymes.length} words · {yMax} pts</p>
                     </div>
                     <div style={S.chips}>
@@ -519,8 +589,13 @@
       header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 0 12px" },
       brand: { display: "flex", alignItems: "center", gap: 12 },
       title: { fontFamily: "'Instrument Serif', serif", fontSize: 24, margin: 0, color: "#1a1a2e", lineHeight: 1.1, letterSpacing: "-0.3px" },
+      puzzleNum: { fontSize: 13, fontWeight: 600, color: "#9CA3AF", letterSpacing: "0.3px" },
       subtitle: { margin: 0, fontSize: 12, color: "#9CA3AF", marginTop: 2 },
-      nav: { display: "flex", gap: 2 },
+      streakBadge: {
+        display: "flex", alignItems: "center", gap: 3, padding: "4px 10px",
+        borderRadius: 99, background: "#FEF3C7", border: "1px solid #FDE68A",
+        fontSize: 13, fontWeight: 700, color: "#D97706", marginRight: 4,
+      },
       divider: { height: 1, background: "#E5E7EB", marginBottom: 24 },
       progress: { display: "flex", alignItems: "center", gap: 12, marginBottom: 28, padding: "0 2px" },
       rankBadge: { fontSize: 11, fontWeight: 700, color: "#6D28D9", whiteSpace: "nowrap", minWidth: 72, textTransform: "uppercase", letterSpacing: "0.5px" },
@@ -538,8 +613,9 @@
       inputWrap: { display: "flex", gap: 10, marginBottom: 14 },
       input: { flex: 1, padding: "13px 18px", fontSize: 17, borderRadius: 12, border: "1.5px solid #D1D5DB", background: "#fff", fontFamily: "'DM Sans', sans-serif", color: "#1a1a2e", transition: "border-color 0.15s, box-shadow 0.15s" },
       enterBtn: { padding: "13px 24px", fontSize: 15, fontWeight: 700, borderRadius: 12, border: "none", background: "#6D28D9", color: "#fff", fontFamily: "'DM Sans', sans-serif", transition: "opacity 0.15s" },
-      actions: { display: "flex", justifyContent: "center", gap: 8, marginBottom: 24 },
-      pill: { padding: "7px 18px", fontSize: 13, fontWeight: 600, borderRadius: 99, border: "1.5px solid #D1D5DB", background: "#fff", color: "#374151", fontFamily: "'DM Sans', sans-serif" },
+      actions: { display: "flex", justifyContent: "center", gap: 8, marginBottom: 24, flexWrap: "wrap" },
+      pill: { padding: "7px 16px", fontSize: 13, fontWeight: 600, borderRadius: 99, border: "1.5px solid #D1D5DB", background: "#fff", color: "#374151", fontFamily: "'DM Sans', sans-serif", display: "inline-flex", alignItems: "center", gap: 5 },
+      hintPill: { borderColor: "#DDD6FE", color: "#6D28D9", background: "#F5F3FF" },
       foundBox: { background: "#fff", borderRadius: 14, border: "1px solid #E5E7EB", overflow: "hidden", marginBottom: 12 },
       foundHead: { padding: "13px 18px", borderBottom: "1px solid #F3F4F6" },
       foundLabel: { fontSize: 13, fontWeight: 600, color: "#6D28D9" },
