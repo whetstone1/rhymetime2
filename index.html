@@ -2,34 +2,33 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Rhyme Time — A Daily Word Game</title>
   <meta name="description" content="A daily word game — find all the rhymes! New puzzle every day." />
-  <!-- Open Graph / Social Sharing -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Rhyme Time — A Daily Word Game" />
   <meta property="og:description" content="Find all the rhymes! A new puzzle every day. How many can you get?" />
   <meta property="og:image" content="https://rhymetime.gg/og-image.png" />
   <meta property="og:url" content="https://rhymetime.gg" />
   <meta property="og:site_name" content="Rhyme Time" />
-  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Rhyme Time — A Daily Word Game" />
   <meta name="twitter:description" content="Find all the rhymes! A new puzzle every day." />
   <meta name="twitter:image" content="https://rhymetime.gg/og-image.png" />
-  <!-- iMessage / general -->
   <meta name="apple-mobile-web-app-title" content="Rhyme Time" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Instrument+Serif&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
     body {
       font-family: 'DM Sans', -apple-system, sans-serif;
       background: #FAFAF8;
       color: #1a1a2e;
       -webkit-font-smoothing: antialiased;
     }
+    #root { height: 100%; }
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
       20% { transform: translateX(-6px); }
@@ -39,12 +38,15 @@
     }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes popIn { 0% { transform: scale(0.85); opacity: 0; } 60% { transform: scale(1.03); } 100% { transform: scale(1); opacity: 1; } }
-    @keyframes celebrateFade { 0%, 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-16px); } }
+    @keyframes celebrateFade { 0% { opacity: 0; transform: scale(0.8); } 15% { opacity: 1; transform: scale(1.05); } 25% { transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translateY(-10px); } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-    input:focus { outline: none; border-color: #6D28D9 !important; box-shadow: 0 0 0 3px rgba(109,40,217,0.1) !important; }
+    input:focus { outline: none; border-color: #6D28D9 !important; box-shadow: 0 0 0 3px rgba(109,40,217,0.08) !important; }
     button { cursor: pointer; font-family: inherit; }
     button:active { transform: scale(0.97); }
     a { color: inherit; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 99px; }
   </style>
 </head>
 <body>
@@ -110,7 +112,7 @@
     ];
 
     // ─── CONSTANTS ───────────────────────────────────────────────────────
-    const EPOCH = 20493; // Feb 9, 2026 = Puzzle #1
+    const EPOCH = 20493;
     const MAX_HINTS = 3;
 
     const RANKS = [
@@ -133,7 +135,6 @@
       return r;
     }
 
-    // ─── DAILY PUZZLE ────────────────────────────────────────────────────
     function dayNum() { return Math.floor(Date.now() / 86400000); }
 
     function seeded(s) {
@@ -149,16 +150,13 @@
       return PUZZLES[Math.floor(seeded(d + 42) * PUZZLES.length) % PUZZLES.length];
     }
 
-    function puzzleNumber(offset = 0) {
-      return Math.max(1, dayNum() + offset - EPOCH + 1);
-    }
+    function puzzleNumber(offset = 0) { return Math.max(1, dayNum() + offset - EPOCH + 1); }
 
     function dateStr(offset = 0) {
       const d = new Date(); d.setDate(d.getDate() + offset);
-      return d.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+      return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
     }
 
-    // ─── STORAGE ─────────────────────────────────────────────────────────
     const LS = {
       get: (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
       set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
@@ -167,7 +165,7 @@
     const gameKey = (off = 0) => `rt-${dayNum() + off}`;
     const DEF_STATS = { games: 0, wins: 0, ranks: {}, streak: 0, maxStreak: 0, lastDay: 0 };
 
-    // ─── SVG LOGO ────────────────────────────────────────────────────────
+    // ─── LOGO ────────────────────────────────────────────────────────────
     function Logo({ size = 40 }) {
       return (
         <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
@@ -195,26 +193,25 @@
       );
     }
 
-    // ─── ICON BUTTONS ────────────────────────────────────────────────────
     function NavIcon({ onClick, title, children }) {
       return (
         <button onClick={onClick} title={title} style={{
-          background: "none", border: "none", padding: "8px", borderRadius: 8,
-          color: "#6B7280", display: "flex", alignItems: "center", justifyContent: "center",
+          background: "none", border: "none", padding: "7px", borderRadius: 8,
+          color: "#9CA3AF", display: "flex", alignItems: "center", justifyContent: "center",
           transition: "color 0.15s",
         }}
           onMouseEnter={e => e.currentTarget.style.color = "#6D28D9"}
-          onMouseLeave={e => e.currentTarget.style.color = "#6B7280"}
+          onMouseLeave={e => e.currentTarget.style.color = "#9CA3AF"}
         >{children}</button>
       );
     }
 
-    const Icons = {
-      yesterday: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 8 14"/></svg>,
-      stats: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="6" width="4" height="15"/><rect x="17" y="2" width="4" height="19"/></svg>,
-      ranks: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9l6-6 6 6"/><path d="M12 3v18"/></svg>,
-      help: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 115.12 2.13c-.67.56-1.12 1.2-1.12 1.87v1"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg>,
-      hint: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 014 12.7V17H8v-2.3A7 7 0 0112 2z"/></svg>,
+    const Ic = {
+      yesterday: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 8 14"/></svg>,
+      stats: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="6" width="4" height="15"/><rect x="17" y="2" width="4" height="19"/></svg>,
+      ranks: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9l6-6 6 6"/><path d="M12 3v18"/></svg>,
+      help: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 115.12 2.13c-.67.56-1.12 1.2-1.12 1.87v1"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg>,
+      hint: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 014 12.7V17H8v-2.3A7 7 0 0112 2z"/></svg>,
     };
 
     // ─── MAIN APP ────────────────────────────────────────────────────────
@@ -226,12 +223,12 @@
       const maxPts = useMemo(() => puzzle.rhymes.reduce((a, w) => a + w.length, 0), [puzzle]);
 
       const [found, setFound] = useState(() => {
-        const saved = LS.get(gameKey());
-        return (saved?.found && saved?.target === puzzle.target) ? saved.found : [];
+        const s = LS.get(gameKey());
+        return (s?.found && s?.target === puzzle.target) ? s.found : [];
       });
       const [hintsUsed, setHintsUsed] = useState(() => {
-        const saved = LS.get(gameKey());
-        return (saved?.hints && saved?.target === puzzle.target) ? saved.hints : [];
+        const s = LS.get(gameKey());
+        return (s?.hints && s?.target === puzzle.target) ? s.hints : [];
       });
       const [input, setInput] = useState("");
       const [msg, setMsg] = useState(null);
@@ -242,10 +239,11 @@
       const [celebrate, setCelebrate] = useState(null);
       const [stats, setStats] = useState(() => LS.get("rt-stats-v2") || DEF_STATS);
       const [yFound] = useState(() => {
-        const saved = LS.get(gameKey(-1));
-        return (saved?.found && saved?.target === yPuzzle.target) ? saved.found : [];
+        const s = LS.get(gameKey(-1));
+        return (s?.found && s?.target === yPuzzle.target) ? s.found : [];
       });
       const inputRef = useRef(null);
+      const wordsRef = useRef(null);
       const prevRank = useRef(null);
       const msgT = useRef(null);
       const recorded = useRef(false);
@@ -256,13 +254,11 @@
       const done = found.length === puzzle.rhymes.length;
       const hintsLeft = MAX_HINTS - hintsUsed.length;
 
-      // Save game state
       useEffect(() => {
         if (found.length > 0 || hintsUsed.length > 0)
           LS.set(gameKey(), { found, hints: hintsUsed, target: puzzle.target, ts: Date.now() });
       }, [found, hintsUsed]);
 
-      // Rank-up celebration
       useEffect(() => {
         if (prevRank.current && prevRank.current !== rank.name && rank.name !== "Beginner") {
           setCelebrate(rank.name);
@@ -271,7 +267,6 @@
         prevRank.current = rank.name;
       }, [rank]);
 
-      // Record stats
       useEffect(() => {
         if (recorded.current) return;
         if (done || rank.name === "Genius") {
@@ -287,6 +282,11 @@
           setStats(s); LS.set("rt-stats-v2", s);
         }
       }, [done, rank]);
+
+      // Auto-scroll found words to bottom when new word added
+      useEffect(() => {
+        if (wordsRef.current) wordsRef.current.scrollTop = wordsRef.current.scrollHeight;
+      }, [found]);
 
       const flash = useCallback((t, type = "info", dur = 2200) => {
         if (msgT.current) clearTimeout(msgT.current);
@@ -307,124 +307,81 @@
         inputRef.current?.focus();
       }, [input, found, puzzle, flash]);
 
-      // ─── HINT SYSTEM ───────────────────────────────────────────────────
       const useHint = useCallback(() => {
         const unfound = puzzle.rhymes.filter(w => !found.includes(w) && !hintsUsed.includes(w));
         if (unfound.length === 0 || hintsLeft <= 0) return;
         const word = unfound[Math.floor(Math.random() * unfound.length)];
-        const firstLetter = word[0].toUpperCase();
-        const len = word.length;
         setHintsUsed(prev => [...prev, word]);
-        flash(`💡 A ${len}-letter rhyme starts with "${firstLetter}"`, "hint", 4000);
+        flash(`💡 ${word.length} letters, starts with "${word[0].toUpperCase()}"`, "hint", 4000);
         inputRef.current?.focus();
       }, [puzzle, found, hintsUsed, hintsLeft, flash]);
 
-      // ─── SHARE (with puzzle # and streak) ──────────────────────────────
       const share = () => {
+        const hintTxt = hintsUsed.length > 0 ? ` · ${hintsUsed.length} hint${hintsUsed.length > 1 ? "s" : ""}` : "";
         const streakTxt = stats.streak > 1 ? `\n🔥 ${stats.streak}-day streak` : "";
-        const hintTxt = hintsUsed.length > 0 ? ` (${hintsUsed.length} hint${hintsUsed.length > 1 ? "s" : ""})` : "";
-        const t = `🃏 Rhyme Time #${pNum}\n🎯 "${puzzle.target.toUpperCase()}"\n📊 ${found.length}/${puzzle.rhymes.length} words · ${pts}/${maxPts} pts${hintTxt}\n${rank.name}${streakTxt}\n\nhttps://rhymetime.gg`;
+        const t = `🃏 Rhyme Time #${pNum}\n🎯 "${puzzle.target.toUpperCase()}"\n📊 ${found.length}/${puzzle.rhymes.length} rhymes · ${pts}/${maxPts} pts${hintTxt}\n${rank.name}${streakTxt}\n\nrhymetime.gg`;
         navigator.clipboard.writeText(t).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2500); });
       };
 
       const yMax = yPuzzle.rhymes.reduce((a, w) => a + w.length, 0);
 
       return (
-        <div style={S.page}>
+        <div style={S.shell}>
           <div style={S.app}>
-            {/* ─── HEADER ─── */}
-            <header style={S.header}>
-              <div style={S.brand}>
-                <Logo size={36} />
-                <div>
-                  <div style={{display: "flex", alignItems: "baseline", gap: 8}}>
-                    <h1 style={S.title}>Rhyme Time</h1>
-                    <span style={S.puzzleNum}>#{pNum}</span>
+
+            {/* ══════ TOP: FIXED HEADER ZONE ══════ */}
+            <div style={S.top}>
+              {/* Header */}
+              <header style={S.header}>
+                <div style={S.brand}>
+                  <Logo size={32} />
+                  <div>
+                    <div style={{display: "flex", alignItems: "baseline", gap: 7}}>
+                      <h1 style={S.title}>Rhyme Time</h1>
+                      <span style={S.puzzleNum}>#{pNum}</span>
+                    </div>
+                    <p style={S.subtitle}>{dateStr()}</p>
                   </div>
-                  <p style={S.subtitle}>{dateStr()}</p>
                 </div>
+                <nav style={{display: "flex", alignItems: "center", gap: 1}}>
+                  {stats.streak > 0 && (
+                    <div style={S.streakBadge}><span>🔥</span><span>{stats.streak}</span></div>
+                  )}
+                  <NavIcon onClick={() => setModal("yesterday")} title="Yesterday">{Ic.yesterday}</NavIcon>
+                  <NavIcon onClick={() => setModal("stats")} title="Stats">{Ic.stats}</NavIcon>
+                  <NavIcon onClick={() => setModal("ranks")} title="Rankings">{Ic.ranks}</NavIcon>
+                  <NavIcon onClick={() => setModal("how")} title="How to Play">{Ic.help}</NavIcon>
+                </nav>
+              </header>
+
+              {/* Progress */}
+              <div style={S.progress}>
+                <span style={S.rankLabel}>{rank.name}</span>
+                <div style={S.track}>
+                  <div style={{...S.fill, width: `${Math.min(pct, 100)}%`}} />
+                  {RANKS.slice(1).map((r, i) => (
+                    <div key={i} style={{...S.dot, left: `${r.threshold * 100}%`,
+                      background: pts/maxPts >= r.threshold ? "#7C3AED" : "#D1D5DB"}} />
+                  ))}
+                </div>
+                <span style={S.ptsLabel}>{pts}/{maxPts}</span>
               </div>
-              <nav style={{display: "flex", alignItems: "center", gap: 2}}>
-                {stats.streak > 0 && (
-                  <div style={S.streakBadge} title={`${stats.streak}-day streak`}>
-                    <span style={{fontSize: 14}}>🔥</span>
-                    <span>{stats.streak}</span>
-                  </div>
-                )}
-                <NavIcon onClick={() => setModal("yesterday")} title="Yesterday">{Icons.yesterday}</NavIcon>
-                <NavIcon onClick={() => setModal("stats")} title="Stats">{Icons.stats}</NavIcon>
-                <NavIcon onClick={() => setModal("ranks")} title="Rankings">{Icons.ranks}</NavIcon>
-                <NavIcon onClick={() => setModal("how")} title="How to Play">{Icons.help}</NavIcon>
-              </nav>
-            </header>
 
-            <div style={S.divider} />
-
-            {/* ─── PROGRESS ─── */}
-            <div style={S.progress}>
-              <span style={S.rankBadge}>{rank.name}</span>
-              <div style={S.track}>
-                <div style={{...S.fill, width: `${Math.min(pct, 100)}%`}} />
-                {RANKS.slice(1).map((r, i) => (
-                  <div key={i} style={{...S.marker, left: `${r.threshold * 100}%`}}>
-                    <div style={{width: 6, height: 6, borderRadius: "50%", border: "2px solid #fff",
-                      background: pts/maxPts >= r.threshold ? "#6D28D9" : "#D1D5DB", transition: "background 0.3s"}} />
-                  </div>
-                ))}
+              {/* Target */}
+              <div style={S.targetArea}>
+                <p style={S.targetHint}>Find words that rhyme with</p>
+                <h2 style={S.targetWord}>{puzzle.target}</h2>
               </div>
-              <span style={S.ptsLabel}>{pts}/{maxPts}</span>
             </div>
 
-            {/* ─── TARGET ─── */}
-            <div style={S.targetArea}>
-              <p style={S.targetHint}>Find words that rhyme with</p>
-              <h2 style={S.targetWord}>{puzzle.target}</h2>
-              <p style={S.targetCount}>{found.length} of {puzzle.rhymes.length} words found</p>
-            </div>
-
-            {/* ─── TOAST ─── */}
-            {msg && <div style={{...S.toast,
-              background: msgType === "ok" ? "#059669" : msgType === "err" ? "#DC2626" : msgType === "warn" ? "#D97706" : msgType === "hint" ? "#6D28D9" : "#6B7280"
-            }}>{msg}</div>}
-
-            {/* ─── RANK CELEBRATE ─── */}
-            {celebrate && <div style={S.celebWrap}><span style={S.celebText}>{celebrate}!</span></div>}
-
-            {/* ─── INPUT ─── */}
-            <div style={{...S.inputWrap, animation: shake ? "shake 0.4s ease" : "none"}}>
-              <input ref={inputRef} type="text" value={input}
-                onChange={e => setInput(e.target.value.replace(/[^a-zA-Z]/g, ""))}
-                onKeyDown={e => e.key === "Enter" && submit()}
-                placeholder={done ? "All found! 🎉" : "Type a rhyme..."}
-                style={S.input} autoFocus autoComplete="off" autoCapitalize="off" spellCheck="false" disabled={done}
-              />
-              <button onClick={submit} disabled={done || !input}
-                style={{...S.enterBtn, opacity: input ? 1 : 0.4}}>Enter</button>
-            </div>
-
-            {/* ─── ACTIONS ─── */}
-            <div style={S.actions}>
-              {!done && (
-                <button style={{...S.pill, ...S.hintPill, opacity: hintsLeft > 0 ? 1 : 0.4}}
-                  onClick={useHint} disabled={hintsLeft <= 0}>
-                  {Icons.hint}
-                  <span>Hint ({hintsLeft})</span>
-                </button>
-              )}
-              <button style={S.pill} onClick={() => { setInput(""); inputRef.current?.focus(); }}>Clear</button>
-              <button style={S.pill} onClick={share}>{copied ? "✅ Copied!" : "Share"}</button>
-              {done && <button style={{...S.pill, background: "#6D28D9", color: "#fff", borderColor: "#6D28D9"}} onClick={() => setModal("answers")}>View All</button>}
-            </div>
-
-            {/* ─── FOUND WORDS ─── */}
-            <div style={S.foundBox}>
-              <div style={S.foundHead}>
-                <span style={S.foundLabel}>{found.length === 0 ? "Your words will appear here" : `Found Words (${found.length})`}</span>
-              </div>
-              {found.length > 0 && (
+            {/* ══════ MIDDLE: SCROLLABLE FOUND WORDS ══════ */}
+            <div ref={wordsRef} style={S.middle}>
+              {found.length === 0 ? (
+                <p style={S.emptyHint}>{puzzle.rhymes.length} words to find — start typing!</p>
+              ) : (
                 <div style={S.chips}>
                   {found.map((w, i) => (
-                    <span key={w} style={{...S.chip, animationDelay: `${i*0.02}s`}}>
+                    <span key={w} style={{...S.chip, animationDelay: `${Math.max(0, i - found.length + 3) * 0.04}s`}}>
                       {w}<span style={S.chipPt}>+{w.length}</span>
                     </span>
                   ))}
@@ -432,145 +389,169 @@
               )}
             </div>
 
-            {found.length > 0 && !done && (
-              <p style={S.remain}>{puzzle.rhymes.length - found.length} remaining</p>
-            )}
-
-            {/* ─── FOOTER ─── */}
-            <footer style={S.footer}>
-              <div style={S.footerInner}>
-                <Logo size={18} />
-                <span>Rhyme Time</span>
-                <span style={{color: "#D1D5DB"}}>·</span>
-                <a href="https://buymeacoffee.com/rhymetime" target="_blank" rel="noopener noreferrer"
-                  style={S.coffeeLink}>Buy us a coffee ☕</a>
+            {/* ══════ BOTTOM: FIXED INPUT ZONE ══════ */}
+            <div style={S.bottom}>
+              {/* Word count */}
+              <div style={S.countRow}>
+                <span style={S.countText}>{found.length} of {puzzle.rhymes.length} found</span>
+                {!done && found.length > 0 && <span style={S.countRemain}>{puzzle.rhymes.length - found.length} remaining</span>}
               </div>
-            </footer>
+
+              {/* Input */}
+              <div style={{...S.inputRow, animation: shake ? "shake 0.4s ease" : "none"}}>
+                <input ref={inputRef} type="text" value={input}
+                  onChange={e => setInput(e.target.value.replace(/[^a-zA-Z]/g, ""))}
+                  onKeyDown={e => e.key === "Enter" && submit()}
+                  placeholder={done ? "All found! 🎉" : "Type a rhyme..."}
+                  style={S.input} autoFocus autoComplete="off" autoCapitalize="off" spellCheck="false" disabled={done}
+                />
+                <button onClick={submit} disabled={done || !input}
+                  style={{...S.enterBtn, opacity: input ? 1 : 0.4}}>Enter</button>
+              </div>
+
+              {/* Actions */}
+              <div style={S.actions}>
+                {!done && (
+                  <button style={{...S.pill, ...S.hintPill, opacity: hintsLeft > 0 ? 1 : 0.4}}
+                    onClick={useHint} disabled={hintsLeft <= 0}>
+                    {Ic.hint}<span>Hint ({hintsLeft})</span>
+                  </button>
+                )}
+                <button style={S.pill} onClick={share}>{copied ? "✓ Copied" : "Share"}</button>
+                {done && <button style={{...S.pill, background: "#6D28D9", color: "#fff", borderColor: "#6D28D9"}} onClick={() => setModal("answers")}>View All</button>}
+              </div>
+
+              {/* Footer */}
+              <div style={S.footer}>
+                <Logo size={14} /><span>Rhyme Time</span>
+                <span style={{color: "#E5E7EB"}}>·</span>
+                <a href="https://buymeacoffee.com/rhymetime" target="_blank" rel="noopener" style={S.coffeeLink}>Buy us a coffee ☕</a>
+              </div>
+            </div>
+
+            {/* ══════ OVERLAYS (no layout impact) ══════ */}
+            {msg && <div style={{...S.toast,
+              background: msgType === "ok" ? "#059669" : msgType === "err" ? "#DC2626" : msgType === "warn" ? "#D97706" : msgType === "hint" ? "#7C3AED" : "#6B7280"
+            }}>{msg}</div>}
+
+            {celebrate && <div style={S.celebOverlay}><span style={S.celebText}>{celebrate}!</span></div>}
 
             {/* ═══════════════ MODALS ═══════════════ */}
             {modal && (
               <div style={S.overlay} onClick={() => setModal(null)}>
                 <div style={S.modal} onClick={e => e.stopPropagation()}>
                   <button style={S.closeX} onClick={() => setModal(null)}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   </button>
 
-                  {/* HOW TO PLAY */}
                   {modal === "how" && <>
-                    <div style={{textAlign: "center", marginBottom: 20}}><Logo size={52} /></div>
+                    <div style={{textAlign: "center", marginBottom: 16}}><Logo size={48} /></div>
                     <h2 style={S.mTitle}>How to Play</h2>
-                    <p style={S.mBody}>Find all the words that rhyme with the <strong>target word</strong>. Both short and multi-syllable words count — if it rhymes, it scores!</p>
+                    <p style={S.mBody}>Find all the words that rhyme with the <strong>target word</strong>. Both short and multi-syllable words count!</p>
                     <div style={S.rules}>
                       {[
                         ["🎯", "Type a rhyming word and press Enter"],
                         ["📏", "Score points equal to the word's letter count"],
                         ["📈", "Climb 10 ranks from Beginner to Rhyme Master"],
                         ["🔤", "Multi-syllable words count — 'impressed' rhymes with 'best'"],
-                        ["💡", `Use up to ${MAX_HINTS} hints per puzzle — reveals first letter and word length`],
+                        ["💡", `${MAX_HINTS} hints per puzzle — reveals first letter & length`],
                         ["🔥", "Play daily to build your streak"],
-                        ["🔄", "New puzzle daily at midnight"],
                       ].map(([ic, txt], i) => (
-                        <div key={i} style={S.ruleRow}><span style={{fontSize: 17, flexShrink: 0}}>{ic}</span><span>{txt}</span></div>
+                        <div key={i} style={S.ruleRow}><span style={{fontSize: 16, flexShrink: 0}}>{ic}</span><span>{txt}</span></div>
                       ))}
                     </div>
                     <div style={S.mimeBox}>
-                      <Logo size={26} />
-                      <p style={S.mimeText}><em>"Don't overthink, just let words flow —<br/>if it sounds right, give it a go!<br/>Each rhyme you find will raise your score,<br/>so type away and find some more!"</em></p>
+                      <Logo size={24} />
+                      <p style={S.mimeText}><em>"Don't overthink, just let words flow —<br/>if it sounds right, give it a go!"</em></p>
                     </div>
                   </>}
 
-                  {/* RANKINGS */}
                   {modal === "ranks" && <>
                     <h2 style={S.mTitle}>Rankings</h2>
-                    <p style={{color: "#9CA3AF", fontSize: 13, marginBottom: 14}}>Based on % of {maxPts} possible points today.</p>
-                    <div style={{display: "flex", flexDirection: "column", gap: 5}}>
+                    <p style={{color: "#9CA3AF", fontSize: 12, marginBottom: 12}}>Based on % of {maxPts} possible points.</p>
+                    <div style={{display: "flex", flexDirection: "column", gap: 4}}>
                       {RANKS.map((r, i) => {
                         const cur = rank.name === r.name;
                         return (
-                          <div key={i} style={{display: "flex", justifyContent: "space-between", padding: "10px 14px", borderRadius: 10,
-                            border: cur ? "2px solid #6D28D9" : "1px solid #E5E7EB",
-                            background: cur ? "#F5F3FF" : "transparent", fontWeight: cur ? 700 : 400, fontSize: 14}}>
+                          <div key={i} style={{display: "flex", justifyContent: "space-between", padding: "9px 12px", borderRadius: 8,
+                            border: cur ? "2px solid #7C3AED" : "1px solid #F3F4F6",
+                            background: cur ? "#F5F3FF" : "transparent", fontWeight: cur ? 700 : 400, fontSize: 13}}>
                             <span>{r.name}</span>
-                            <span style={{color: "#9CA3AF"}}>{Math.ceil(r.threshold * maxPts)} pts · {Math.round(r.threshold * 100)}%</span>
+                            <span style={{color: "#9CA3AF"}}>{Math.ceil(r.threshold * maxPts)} pts</span>
                           </div>
                         );
                       })}
                     </div>
                   </>}
 
-                  {/* ANSWERS */}
                   {modal === "answers" && <>
                     <h2 style={S.mTitle}>All Rhymes for "{puzzle.target}"</h2>
-                    <div style={S.chips}>
+                    <div style={S.mChips}>
                       {[...puzzle.rhymes].sort().map(w => (
                         <span key={w} style={{...S.chip,
                           background: found.includes(w) ? "#ECFDF5" : "#FEF2F2",
-                          borderColor: found.includes(w) ? "#86EFAC" : "#FECACA"}}>
+                          borderColor: found.includes(w) ? "#86EFAC" : "#FECACA", animation: "none"}}>
                           {found.includes(w) ? "✓ " : "✗ "}{w}
                         </span>
                       ))}
                     </div>
                   </>}
 
-                  {/* STATS */}
                   {modal === "stats" && <>
                     <h2 style={S.mTitle}>Statistics</h2>
-                    <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12}}>
+                    <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10}}>
                       {[[stats.games,"Played"],[stats.wins,"Completed"],[stats.streak,"Streak 🔥"],[stats.maxStreak,"Best Streak"]].map(([v, l], i) => (
-                        <div key={i} style={{textAlign: "center", padding: "16px 8px", background: "#F9FAFB", borderRadius: 12, border: "1px solid #E5E7EB"}}>
-                          <div style={{fontSize: 28, fontWeight: 700, color: "#6D28D9"}}>{v}</div>
-                          <div style={{fontSize: 11, color: "#9CA3AF", fontWeight: 600, marginTop: 2}}>{l}</div>
+                        <div key={i} style={{textAlign: "center", padding: "14px 6px", background: "#F9FAFB", borderRadius: 10, border: "1px solid #F3F4F6"}}>
+                          <div style={{fontSize: 26, fontWeight: 700, color: "#7C3AED"}}>{v}</div>
+                          <div style={{fontSize: 10, color: "#9CA3AF", fontWeight: 600, marginTop: 2, textTransform: "uppercase", letterSpacing: "0.5px"}}>{l}</div>
                         </div>
                       ))}
                     </div>
-                    <h3 style={{fontSize: 13, color: "#6B7280", marginTop: 20, marginBottom: 8}}>Rank Distribution</h3>
+                    <h3 style={{fontSize: 12, color: "#9CA3AF", marginTop: 18, marginBottom: 6, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px"}}>Rank Distribution</h3>
                     <div style={{display: "flex", flexDirection: "column", gap: 3}}>
                       {RANKS.map((r, i) => {
                         const c = stats.ranks[r.name] || 0;
                         const mx = Math.max(1, ...Object.values(stats.ranks).map(Number));
                         return (
-                          <div key={i} style={{display: "flex", alignItems: "center", gap: 8, fontSize: 12}}>
-                            <span style={{width: 75, textAlign: "right", color: "#9CA3AF", flexShrink: 0}}>{r.name}</span>
-                            <div style={{flex: 1, height: 16, background: "#F3F4F6", borderRadius: 99, overflow: "hidden"}}>
-                              <div style={{height: "100%", width: `${c > 0 ? Math.max(6, (c/mx)*100) : 0}%`, background: "linear-gradient(90deg, #A78BFA, #6D28D9)", borderRadius: 99}} />
+                          <div key={i} style={{display: "flex", alignItems: "center", gap: 6, fontSize: 11}}>
+                            <span style={{width: 70, textAlign: "right", color: "#9CA3AF", flexShrink: 0}}>{r.name}</span>
+                            <div style={{flex: 1, height: 14, background: "#F3F4F6", borderRadius: 99, overflow: "hidden"}}>
+                              <div style={{height: "100%", width: `${c > 0 ? Math.max(8, (c/mx)*100) : 0}%`, background: "linear-gradient(90deg, #A78BFA, #7C3AED)", borderRadius: 99, transition: "width 0.3s"}} />
                             </div>
-                            <span style={{width: 20, color: "#6D28D9", fontWeight: 600, textAlign: "right"}}>{c}</span>
+                            <span style={{width: 16, color: "#7C3AED", fontWeight: 700, textAlign: "right"}}>{c}</span>
                           </div>
                         );
                       })}
                     </div>
                     <div style={S.mimeBox}>
-                      <Logo size={22} />
+                      <Logo size={20} />
                       <p style={S.mimeText}><em>"Your stats are here, both high and low —<br/>keep playing daily, watch them grow!"</em></p>
                     </div>
                   </>}
 
-                  {/* YESTERDAY */}
                   {modal === "yesterday" && <>
                     <h2 style={S.mTitle}>Yesterday's Answers</h2>
-                    <p style={{color: "#9CA3AF", fontSize: 13, marginBottom: 8}}>
-                      Puzzle #{yNum} · {dateStr(-1)}
-                    </p>
-                    <div style={{textAlign: "center", margin: "10px 0 18px"}}>
-                      <div style={{fontFamily: "'DM Serif Display', serif", fontSize: 34, color: "#1a1a2e", letterSpacing: 2}}>{yPuzzle.target}</div>
-                      <p style={{margin: "2px 0 0", fontSize: 12, color: "#9CA3AF"}}>{yPuzzle.rhymes.length} words · {yMax} pts</p>
+                    <p style={{color: "#9CA3AF", fontSize: 12, marginBottom: 6}}>Puzzle #{yNum} · {dateStr(-1)}</p>
+                    <div style={{textAlign: "center", margin: "8px 0 14px"}}>
+                      <div style={{fontFamily: "'DM Serif Display', serif", fontSize: 32, color: "#1a1a2e", letterSpacing: 2}}>{yPuzzle.target}</div>
+                      <p style={{margin: "2px 0 0", fontSize: 11, color: "#9CA3AF"}}>{yPuzzle.rhymes.length} words · {yMax} pts</p>
                     </div>
-                    <div style={S.chips}>
+                    <div style={S.mChips}>
                       {[...yPuzzle.rhymes].sort().map(w => {
                         const f = yFound.includes(w);
                         return (
                           <span key={w} style={{...S.chip, background: f ? "#ECFDF5" : "#FFFBEB",
-                            borderColor: f ? "#86EFAC" : "#FDE68A", fontWeight: f ? 600 : 400}}>
+                            borderColor: f ? "#86EFAC" : "#FDE68A", fontWeight: f ? 600 : 400, animation: "none"}}>
                             {f && <span style={{color: "#059669"}}>✓ </span>}{w}
                           </span>
                         );
                       })}
                     </div>
-                    {yFound.length > 0 && <p style={{textAlign: "center", marginTop: 14, fontSize: 13, color: "#6D28D9", fontWeight: 600}}>
-                      You found {yFound.length} of {yPuzzle.rhymes.length} yesterday
+                    {yFound.length > 0 && <p style={{textAlign: "center", marginTop: 12, fontSize: 12, color: "#7C3AED", fontWeight: 600}}>
+                      You found {yFound.length} of {yPuzzle.rhymes.length}
                     </p>}
                     <div style={S.mimeBox}>
-                      <Logo size={22} />
+                      <Logo size={20} />
                       <p style={S.mimeText}><em>"Yesterday's done, the answers are shown —<br/>today's fresh puzzle awaits on its throne!"</em></p>
                     </div>
                   </>}
@@ -584,57 +565,68 @@
 
     // ─── STYLES ──────────────────────────────────────────────────────────
     const S = {
-      page: { minHeight: "100vh", display: "flex", justifyContent: "center", padding: "0 16px" },
-      app: { width: "100%", maxWidth: 500, margin: "0 auto", paddingBottom: 40 },
-      header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 0 12px" },
-      brand: { display: "flex", alignItems: "center", gap: 12 },
-      title: { fontFamily: "'Instrument Serif', serif", fontSize: 24, margin: 0, color: "#1a1a2e", lineHeight: 1.1, letterSpacing: "-0.3px" },
-      puzzleNum: { fontSize: 13, fontWeight: 600, color: "#9CA3AF", letterSpacing: "0.3px" },
-      subtitle: { margin: 0, fontSize: 12, color: "#9CA3AF", marginTop: 2 },
+      shell: { height: "100%", display: "flex", justifyContent: "center", padding: "0 16px" },
+      app: { width: "100%", maxWidth: 480, display: "flex", flexDirection: "column", height: "100%", position: "relative" },
+
+      // Top zone — fixed
+      top: { flexShrink: 0, paddingBottom: 4 },
+      header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0 10px" },
+      brand: { display: "flex", alignItems: "center", gap: 10 },
+      title: { fontFamily: "'Instrument Serif', serif", fontSize: 22, margin: 0, color: "#1a1a2e", lineHeight: 1.1 },
+      puzzleNum: { fontSize: 12, fontWeight: 600, color: "#B4B4B4" },
+      subtitle: { margin: 0, fontSize: 11, color: "#B4B4B4", marginTop: 1 },
       streakBadge: {
-        display: "flex", alignItems: "center", gap: 3, padding: "4px 10px",
+        display: "flex", alignItems: "center", gap: 2, padding: "3px 8px",
         borderRadius: 99, background: "#FEF3C7", border: "1px solid #FDE68A",
-        fontSize: 13, fontWeight: 700, color: "#D97706", marginRight: 4,
+        fontSize: 12, fontWeight: 700, color: "#D97706", marginRight: 2,
       },
-      divider: { height: 1, background: "#E5E7EB", marginBottom: 24 },
-      progress: { display: "flex", alignItems: "center", gap: 12, marginBottom: 28, padding: "0 2px" },
-      rankBadge: { fontSize: 11, fontWeight: 700, color: "#6D28D9", whiteSpace: "nowrap", minWidth: 72, textTransform: "uppercase", letterSpacing: "0.5px" },
-      track: { flex: 1, height: 6, background: "#E5E7EB", borderRadius: 99, position: "relative", overflow: "visible" },
-      fill: { height: "100%", background: "linear-gradient(90deg, #A78BFA, #6D28D9)", borderRadius: 99, transition: "width 0.5s cubic-bezier(0.4,0,0.2,1)" },
-      marker: { position: "absolute", top: "50%", transform: "translate(-50%, -50%)" },
-      ptsLabel: { fontSize: 12, color: "#9CA3AF", whiteSpace: "nowrap", fontWeight: 500, minWidth: 48, textAlign: "right" },
-      targetArea: { textAlign: "center", marginBottom: 28 },
-      targetHint: { margin: 0, fontSize: 13, color: "#9CA3AF", letterSpacing: "0.3px", fontWeight: 500 },
-      targetWord: { fontFamily: "'DM Serif Display', serif", fontSize: 52, color: "#1a1a2e", margin: "6px 0", letterSpacing: "2px", animation: "popIn 0.4s ease", fontWeight: 400 },
-      targetCount: { margin: 0, fontSize: 14, color: "#6D28D9", fontWeight: 600 },
-      toast: { position: "fixed", top: 80, left: "50%", transform: "translateX(-50%)", padding: "9px 22px", borderRadius: 99, color: "#fff", fontSize: 14, fontWeight: 600, zIndex: 100, animation: "fadeIn 0.2s ease", boxShadow: "0 4px 16px rgba(0,0,0,0.12)", whiteSpace: "nowrap" },
-      celebWrap: { textAlign: "center", marginBottom: 12, animation: "celebrateFade 2.2s ease forwards" },
-      celebText: { fontFamily: "'Instrument Serif', serif", fontSize: 22, color: "#6D28D9" },
-      inputWrap: { display: "flex", gap: 10, marginBottom: 14 },
-      input: { flex: 1, padding: "13px 18px", fontSize: 17, borderRadius: 12, border: "1.5px solid #D1D5DB", background: "#fff", fontFamily: "'DM Sans', sans-serif", color: "#1a1a2e", transition: "border-color 0.15s, box-shadow 0.15s" },
-      enterBtn: { padding: "13px 24px", fontSize: 15, fontWeight: 700, borderRadius: 12, border: "none", background: "#6D28D9", color: "#fff", fontFamily: "'DM Sans', sans-serif", transition: "opacity 0.15s" },
-      actions: { display: "flex", justifyContent: "center", gap: 8, marginBottom: 24, flexWrap: "wrap" },
-      pill: { padding: "7px 16px", fontSize: 13, fontWeight: 600, borderRadius: 99, border: "1.5px solid #D1D5DB", background: "#fff", color: "#374151", fontFamily: "'DM Sans', sans-serif", display: "inline-flex", alignItems: "center", gap: 5 },
-      hintPill: { borderColor: "#DDD6FE", color: "#6D28D9", background: "#F5F3FF" },
-      foundBox: { background: "#fff", borderRadius: 14, border: "1px solid #E5E7EB", overflow: "hidden", marginBottom: 12 },
-      foundHead: { padding: "13px 18px", borderBottom: "1px solid #F3F4F6" },
-      foundLabel: { fontSize: 13, fontWeight: 600, color: "#6D28D9" },
-      chips: { padding: "12px 14px 14px", display: "flex", flexWrap: "wrap", gap: 6 },
-      chip: { padding: "5px 12px", borderRadius: 99, fontSize: 13, fontWeight: 500, background: "#F5F3FF", color: "#4C1D95", border: "1px solid #DDD6FE", display: "inline-flex", alignItems: "center", gap: 5, animation: "popIn 0.2s ease both" },
-      chipPt: { fontSize: 10, color: "#A78BFA", fontWeight: 700 },
-      remain: { textAlign: "center", fontSize: 12, color: "#9CA3AF", marginBottom: 12 },
-      footer: { padding: "24px 0 8px" },
-      footerInner: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 12, color: "#9CA3AF", fontWeight: 500 },
-      coffeeLink: { color: "#6D28D9", textDecoration: "none", fontWeight: 600 },
-      overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", backdropFilter: "blur(3px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20, animation: "fadeIn 0.15s ease" },
-      modal: { background: "#fff", borderRadius: 18, padding: "28px 26px 24px", maxWidth: 420, width: "100%", maxHeight: "85vh", overflowY: "auto", position: "relative", boxShadow: "0 16px 48px rgba(0,0,0,0.12)", animation: "slideUp 0.25s ease" },
-      closeX: { position: "absolute", top: 16, right: 16, background: "none", border: "none", color: "#9CA3AF", padding: 4, borderRadius: 6, display: "flex" },
-      mTitle: { fontFamily: "'Instrument Serif', serif", fontSize: 22, color: "#1a1a2e", marginBottom: 10, marginTop: 0 },
-      mBody: { color: "#6B7280", fontSize: 14, lineHeight: 1.7, marginBottom: 4 },
-      rules: { display: "flex", flexDirection: "column", gap: 10, marginTop: 14 },
-      ruleRow: { display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: "#374151" },
-      mimeBox: { marginTop: 20, padding: 14, background: "#F9FAFB", borderRadius: 12, border: "1px solid #E5E7EB", display: "flex", alignItems: "center", gap: 12 },
-      mimeText: { margin: 0, fontSize: 12, color: "#6D28D9", fontWeight: 500, lineHeight: 1.5, textAlign: "left" },
+      progress: { display: "flex", alignItems: "center", gap: 10, padding: "8px 0 12px" },
+      rankLabel: { fontSize: 10, fontWeight: 700, color: "#7C3AED", whiteSpace: "nowrap", minWidth: 64, textTransform: "uppercase", letterSpacing: "0.6px" },
+      track: { flex: 1, height: 5, background: "#EDEDED", borderRadius: 99, position: "relative" },
+      fill: { height: "100%", background: "#7C3AED", borderRadius: 99, transition: "width 0.5s cubic-bezier(0.4,0,0.2,1)", position: "absolute", top: 0, left: 0 },
+      dot: { position: "absolute", top: "50%", transform: "translate(-50%, -50%)", width: 5, height: 5, borderRadius: "50%", border: "1.5px solid #fff", transition: "background 0.3s" },
+      ptsLabel: { fontSize: 11, color: "#B4B4B4", whiteSpace: "nowrap", fontWeight: 500, minWidth: 44, textAlign: "right" },
+      targetArea: { textAlign: "center", padding: "8px 0 16px" },
+      targetHint: { margin: 0, fontSize: 12, color: "#B4B4B4", fontWeight: 500, letterSpacing: "0.2px" },
+      targetWord: { fontFamily: "'DM Serif Display', serif", fontSize: 48, color: "#1a1a2e", margin: "4px 0 0", letterSpacing: "2px", fontWeight: 400 },
+
+      // Middle zone — scrollable found words
+      middle: { flex: 1, overflow: "auto", minHeight: 0, padding: "0 0 8px", borderTop: "1px solid #F3F4F6" },
+      emptyHint: { textAlign: "center", color: "#C4C4C4", fontSize: 13, padding: "24px 16px", fontWeight: 500 },
+      chips: { padding: "10px 4px", display: "flex", flexWrap: "wrap", gap: 5 },
+      chip: { padding: "4px 10px", borderRadius: 99, fontSize: 12, fontWeight: 500, background: "#F5F3FF", color: "#4C1D95", border: "1px solid #E9E5F5", display: "inline-flex", alignItems: "center", gap: 4, animation: "popIn 0.2s ease both" },
+      chipPt: { fontSize: 9, color: "#A78BFA", fontWeight: 700 },
+
+      // Bottom zone — fixed
+      bottom: { flexShrink: 0, borderTop: "1px solid #F3F4F6", paddingTop: 10, paddingBottom: 8 },
+      countRow: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, padding: "0 2px" },
+      countText: { fontSize: 12, fontWeight: 600, color: "#7C3AED" },
+      countRemain: { fontSize: 11, color: "#B4B4B4" },
+      inputRow: { display: "flex", gap: 8, marginBottom: 10 },
+      input: { flex: 1, padding: "11px 14px", fontSize: 16, borderRadius: 10, border: "1.5px solid #E5E7EB", background: "#fff", fontFamily: "'DM Sans', sans-serif", color: "#1a1a2e", transition: "border-color 0.15s, box-shadow 0.15s" },
+      enterBtn: { padding: "11px 20px", fontSize: 14, fontWeight: 700, borderRadius: 10, border: "none", background: "#7C3AED", color: "#fff", fontFamily: "'DM Sans', sans-serif", transition: "opacity 0.15s" },
+      actions: { display: "flex", justifyContent: "center", gap: 6, marginBottom: 10, flexWrap: "wrap" },
+      pill: { padding: "6px 14px", fontSize: 12, fontWeight: 600, borderRadius: 99, border: "1.5px solid #E5E7EB", background: "#fff", color: "#6B7280", fontFamily: "'DM Sans', sans-serif", display: "inline-flex", alignItems: "center", gap: 4 },
+      hintPill: { borderColor: "#E9E5F5", color: "#7C3AED", background: "#FAFAFF" },
+      footer: { display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 10, color: "#C4C4C4", fontWeight: 500, paddingTop: 4 },
+      coffeeLink: { color: "#7C3AED", textDecoration: "none", fontWeight: 600 },
+
+      // Overlays — no layout impact
+      toast: { position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)", padding: "8px 20px", borderRadius: 99, color: "#fff", fontSize: 13, fontWeight: 600, zIndex: 100, animation: "fadeIn 0.2s ease", boxShadow: "0 4px 16px rgba(0,0,0,0.1)", whiteSpace: "nowrap", pointerEvents: "none" },
+      celebOverlay: { position: "absolute", top: "38%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 50, pointerEvents: "none", animation: "celebrateFade 2.2s ease forwards" },
+      celebText: { fontFamily: "'DM Serif Display', serif", fontSize: 24, color: "#7C3AED", background: "rgba(255,255,255,0.9)", padding: "8px 24px", borderRadius: 12, boxShadow: "0 4px 20px rgba(124,58,237,0.15)" },
+
+      // Modals
+      overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.25)", backdropFilter: "blur(3px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20, animation: "fadeIn 0.15s ease" },
+      modal: { background: "#fff", borderRadius: 16, padding: "24px 22px 20px", maxWidth: 400, width: "100%", maxHeight: "80vh", overflowY: "auto", position: "relative", boxShadow: "0 16px 48px rgba(0,0,0,0.1)", animation: "slideUp 0.2s ease" },
+      closeX: { position: "absolute", top: 14, right: 14, background: "none", border: "none", color: "#C4C4C4", padding: 4, borderRadius: 6, display: "flex" },
+      mTitle: { fontFamily: "'Instrument Serif', serif", fontSize: 20, color: "#1a1a2e", marginBottom: 8, marginTop: 0 },
+      mBody: { color: "#6B7280", fontSize: 13, lineHeight: 1.6, marginBottom: 4 },
+      mChips: { display: "flex", flexWrap: "wrap", gap: 5 },
+      rules: { display: "flex", flexDirection: "column", gap: 8, marginTop: 12 },
+      ruleRow: { display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: "#374151", lineHeight: 1.4 },
+      mimeBox: { marginTop: 16, padding: 12, background: "#FAFAFF", borderRadius: 10, border: "1px solid #F3F4F6", display: "flex", alignItems: "center", gap: 10 },
+      mimeText: { margin: 0, fontSize: 11, color: "#7C3AED", fontWeight: 500, lineHeight: 1.5 },
     };
 
     ReactDOM.createRoot(document.getElementById("root")).render(<RhymeTime />);
