@@ -4,12 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rhyme Time</title>
+  <meta name="description" content="A daily word game — find all the rhymes!" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Instrument+Serif&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'DM Sans', sans-serif; background: linear-gradient(175deg, #F8F5FF 0%, #FFF 30%, #FAFAFA 100%); }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', -apple-system, sans-serif;
+      background: #FAFAF8;
+      color: #1a1a2e;
+      -webkit-font-smoothing: antialiased;
+    }
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
       20% { transform: translateX(-6px); }
@@ -17,28 +23,14 @@
       60% { transform: translateX(-4px); }
       80% { transform: translateX(4px); }
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes popIn {
-      0% { transform: scale(0.8); opacity: 0; }
-      60% { transform: scale(1.05); }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    @keyframes celebratePop {
-      0% { transform: scale(0); opacity: 0; }
-      50% { transform: scale(1.3); }
-      70% { transform: scale(0.95); }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    @keyframes celebrateFade {
-      0%, 70% { opacity: 1; }
-      100% { opacity: 0; transform: translateY(-20px); }
-    }
-    input:focus { outline: none; border-color: #7C3AED !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.15) !important; }
-    button { cursor: pointer; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes popIn { 0% { transform: scale(0.85); opacity: 0; } 60% { transform: scale(1.03); } 100% { transform: scale(1); opacity: 1; } }
+    @keyframes celebrateFade { 0%, 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-16px); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    input:focus { outline: none; border-color: #6D28D9 !important; box-shadow: 0 0 0 3px rgba(109,40,217,0.1) !important; }
+    button { cursor: pointer; font-family: inherit; }
     button:active { transform: scale(0.97); }
+    a { color: inherit; }
   </style>
 </head>
 <body>
@@ -49,550 +41,525 @@
   <script type="text/babel">
     const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
-    // ─── Rhyme Puzzle Database ─────────────────────────────────────────────
+    // ─── PUZZLE DATA ─────────────────────────────────────────────────────
     const PUZZLES = [
-      { target: "cat", rhymes: ["bat","brat","chat","fat","flat","hat","mat","pat","rat","sat","slat","splat","tat","that","vat"] },
-      { target: "light", rhymes: ["bite","bright","fight","flight","fright","height","kite","knight","might","night","plight","quite","right","sight","site","slight","spite","tight","white","write"] },
-      { target: "rain", rhymes: ["brain","chain","crane","drain","gain","grain","lane","main","pain","plain","plane","sane","slain","sprain","stain","strain","train","vain","vane"] },
-      { target: "lake", rhymes: ["ache","bake","brake","break","cake","drake","fake","flake","make","quake","rake","sake","shake","snake","stake","steak","take","wake"] },
-      { target: "day", rhymes: ["bay","clay","decay","delay","display","gray","hay","hey","lay","may","okay","pay","play","pray","ray","say","sleigh","spray","stay","stray","sway","tray","way","weigh"] },
-      { target: "cold", rhymes: ["bold","fold","gold","hold","mold","old","rolled","scroll","sold","soul","stroll","told","toll","whole"] },
+      { target: "cat", rhymes: ["acrobat","bat","brat","chat","combat","democrat","diplomat","doormat","fat","flat","format","habitat","hat","mat","pat","rat","sat","slat","splat","tat","that","thermostat","vat"] },
+      { target: "light", rhymes: ["appetite","bite","bright","daylight","delight","despite","dynamite","excite","fight","flashlight","flight","fright","height","ignite","invite","kite","knight","midnight","might","moonlight","night","oversight","parasite","plight","polite","quite","recite","right","satellite","sight","site","slight","spite","spotlight","sunlight","tight","tonight","unite","upright","white","write"] },
+      { target: "rain", rhymes: ["abstain","brain","campaign","chain","champagne","complain","contain","crane","detain","domain","drain","entertain","explain","gain","grain","humane","insane","lane","main","maintain","obtain","ordain","pain","pertain","plain","plane","refrain","remain","restrain","retain","sane","slain","sprain","stain","strain","sustain","terrain","train","vain","vane"] },
+      { target: "lake", rhymes: ["ache","awake","bake","brake","break","cake","drake","earthquake","fake","flake","handshake","make","mistake","opaque","overtake","partake","quake","rake","sake","shake","snake","snowflake","stake","steak","take","undertake","wake"] },
+      { target: "day", rhymes: ["array","away","ballet","bay","betray","birthday","bouquet","buffet","cafe","clay","convey","crochet","decay","delay","dismay","display","essay","everyday","filet","gateway","getaway","gray","halfway","hallway","hay","hey","highway","holiday","hooray","lay","may","obey","okay","pathway","pay","play","portray","pray","ray","relay","repay","runway","say","sleigh","spray","stay","stray","survey","sway","today","tray","way","weigh","yesterday"] },
+      { target: "cold", rhymes: ["behold","blindfold","bold","controlled","enfold","fold","gold","hold","household","manifold","marigold","mold","old","rolled","sold","told","unfold","uphold","withhold"] },
       { target: "jump", rhymes: ["bump","clump","dump","grump","hump","lump","plump","pump","slump","stump","thump","trump"] },
-      { target: "dream", rhymes: ["beam","cream","extreme","gleam","scheme","scream","seam","seem","steam","stream","team","theme"] },
-      { target: "best", rhymes: ["blessed","breast","chest","crest","dressed","fest","guest","jest","lest","nest","pest","pressed","quest","rest","stressed","test","vest","west","zest"] },
-      { target: "ring", rhymes: ["bring","cling","fling","king","ping","sing","sling","spring","sting","string","swing","thing","wing","wring","zing"] },
-      { target: "found", rhymes: ["around","bound","ground","hound","mound","pound","round","sound","wound"] },
-      { target: "green", rhymes: ["bean","clean","dean","gene","keen","lean","machine","magazine","marine","mean","queen","scene","screen","seen","serene","teen","between"] },
-      { target: "fear", rhymes: ["beer","career","cheer","clear","dear","deer","ear","gear","hear","here","mere","near","peer","rear","sheer","sphere","steer","tear","year"] },
-      { target: "block", rhymes: ["clock","dock","flock","knock","lock","mock","rock","shock","sock","stock"] },
-      { target: "nice", rhymes: ["advice","dice","ice","mice","price","rice","slice","spice","splice","twice","vice","device","paradise","precise","sacrifice"] },
-      { target: "share", rhymes: ["air","aware","bare","bear","care","chair","dare","fair","flair","glare","hair","heir","pair","pear","prayer","rare","repair","spare","square","stare","swear","there","wear","where"] },
-      { target: "pink", rhymes: ["blink","brink","clink","drink","ink","link","mink","rink","shrink","sink","stink","sync","think","wink"] },
-      { target: "space", rhymes: ["ace","base","brace","case","chase","embrace","face","grace","lace","pace","place","race","trace","erase","replace","disgrace"] },
-      { target: "bone", rhymes: ["alone","blown","clone","cone","drone","flown","groan","grown","known","loan","moan","own","phone","shown","stone","throne","tone","zone"] },
-      { target: "song", rhymes: ["along","belong","bong","gong","long","prong","strong","wrong","throng"] },
-      { target: "truck", rhymes: ["buck","chuck","cluck","duck","luck","muck","pluck","puck","stuck","struck","suck","tuck","yuck"] },
-      { target: "deep", rhymes: ["asleep","beep","cheap","creep","heap","jeep","keep","leap","peep","reap","seep","sheep","sleep","steep","sweep","weep"] },
-      { target: "glue", rhymes: ["blue","blew","brew","chew","clue","crew","cue","dew","drew","due","few","flew","grew","hue","knew","new","pursue","shoe","stew","threw","through","true","two","view","who","you","zoo"] },
-      { target: "bed", rhymes: ["ahead","bread","dead","dread","fed","fled","head","lead","led","read","red","said","shed","shred","sled","spread","thread","tread","wed"] },
-      { target: "smile", rhymes: ["aisle","bile","compile","dial","file","guile","mile","pile","profile","style","tile","trial","vile","while","worthwhile"] },
-      { target: "name", rhymes: ["aim","blame","came","claim","dame","fame","flame","frame","game","lame","same","shame","tame"] },
-      { target: "hope", rhymes: ["cope","dope","grope","mope","nope","pope","rope","scope","slope"] },
-      { target: "beach", rhymes: ["bleach","breach","each","leach","peach","preach","reach","screech","speech","teach"] },
-      { target: "note", rhymes: ["boat","bloat","coat","devote","dote","float","gloat","goat","moat","promote","quote","remote","throat","tote","vote","wrote"] },
-      { target: "cloud", rhymes: ["aloud","bowed","crowd","loud","plowed","proud","shroud","vowed"] },
-      { target: "steel", rhymes: ["appeal","deal","eel","feel","heal","heel","ideal","kneel","meal","peal","peel","real","reel","reveal","seal","steal","veal","wheel","zeal"] },
-      { target: "book", rhymes: ["brook","cook","crook","hook","look","nook","rook","shook","took"] },
-      { target: "born", rhymes: ["corn","horn","mourn","scorn","sworn","thorn","torn","warn","worn"] },
-      { target: "gold", rhymes: ["bold","cold","fold","hold","mold","old","rolled","scroll","sold","stroll","told","toll"] },
-      { target: "peak", rhymes: ["beak","bleak","cheek","chic","creek","freak","geek","leak","meek","reek","seek","sleek","sneak","speak","squeak","streak","technique","tweak","unique","weak","week"] },
-      { target: "dust", rhymes: ["adjust","bust","crust","disgust","distrust","gust","just","lust","must","robust","rust","thrust","trust"] },
-      { target: "moon", rhymes: ["balloon","bloom","boon","boom","cartoon","cocoon","doom","gloom","groom","lagoon","loom","maroon","noon","platoon","prune","room","soon","spoon","swoon","tune","zoom"] },
-      { target: "shelf", rhymes: ["elf","health","itself","myself","self","stealth","wealth","yourself"] },
-      { target: "ball", rhymes: ["all","brawl","call","crawl","fall","hall","haul","install","mall","shawl","small","sprawl","stall","tall","wall"] },
-      { target: "seed", rhymes: ["bleed","breed","creed","deed","exceed","feed","freed","greed","heed","indeed","need","plead","proceed","read","reed","speed","steed","succeed","weed"] },
-      { target: "grade", rhymes: ["aid","blade","braid","cascade","crusade","decade","fade","glade","invade","jade","laid","maid","paid","parade","persuade","raid","shade","spade","trade","wade"] },
-      { target: "stone", rhymes: ["alone","blown","bone","clone","cone","drone","flown","groan","grown","known","loan","moan","own","phone","shown","throne","tone","zone"] },
-      { target: "pile", rhymes: ["aisle","bile","compile","dial","file","guile","mile","profile","smile","style","tile","trial","vile","while","worthwhile"] },
-      { target: "match", rhymes: ["attach","batch","catch","dispatch","hatch","latch","patch","scratch","snatch","thatch"] },
-      { target: "drill", rhymes: ["bill","chill","dill","fill","frill","grill","hill","ill","kill","mill","pill","skill","spill","still","thrill","till","will"] },
-      { target: "maze", rhymes: ["amaze","blaze","craze","daze","days","gaze","glaze","graze","haze","laze","phase","phrase","plays","praise","raise","rays","stays","ways"] },
-      { target: "sail", rhymes: ["ale","bail","dale","detail","email","fail","frail","gale","hail","jail","mail","male","nail","pail","pale","prevail","rail","scale","snail","stale","tail","tale","trail","veil","wail","whale"] },
-      { target: "fun", rhymes: ["bun","done","gun","hon","none","nun","one","pun","run","son","spun","stun","sun","ton","won"] },
-      { target: "town", rhymes: ["brown","clown","crown","down","drown","frown","gown","noun"] },
-      { target: "wave", rhymes: ["behave","brave","cave","crave","gave","grave","knave","pave","rave","save","shave","slave"] },
-    ];
+      { target: "dream", rhymes: ["beam","cream","downstream","esteem","extreme","gleam","mainstream","moonbeam","redeem","regime","scheme","scream","seam","seem","steam","stream","sunbeam","supreme","team","theme","upstream"] },
+      { target: "best", rhymes: ["addressed","arrest","assessed","attest","blessed","breast","caressed","chest","compressed","confessed","contest","crest","depressed","digest","distressed","dressed","expressed","fest","finessed","guest","impressed","infest","invest","jest","lest","molest","nest","northeast","northwest","obsessed","pest","possessed","pressed","professed","protest","quest","refreshed","repressed","request","rest","southeast","southwest","stressed","suggest","suppressed","test","unrest","vest","west","zest"] },
+      { target: "ring", rhymes: ["anything","bring","cling","everything","fling","king","nothing","offspring","ping","sing","sling","something","spring","sting","string","swing","thing","wellspring","wing","wring","zing"] },
+      { target: "found", rhymes: ["abound","around","astound","background","bloodhound","bound","compound","confound","dumbfound","expound","foreground","ground","hound","mound","playground","pound","profound","rebound","renowned","round","sound","surround","underground","wound"] },
+      { target: "green", rhymes: ["bean","between","caffeine","canteen","careen","chlorine","clean","convene","cuisine","dean","demean","evergreen","figurine","foreseen","gasoline","gene","guillotine","halloween","intervene","keen","kerosene","lean","limousine","machine","magazine","marine","mean","nicotine","obscene","pristine","protein","quarantine","queen","routine","scene","screen","seen","serene","sixteen","submarine","sunscreen","tambourine","tangerine","teen","trampoline","unforeseen","vaccine","wolverine"] },
+      { target: "fear", rhymes: ["adhere","appear","austere","beer","career","cashier","cavalier","chandelier","cheer","clear","dear","deer","disappear","ear","engineer","frontier","gear","hear","here","interfere","mere","near","peer","persevere","pioneer","premiere","reappear","rear","severe","sheer","sincere","souvenir","sphere","steer","tear","volunteer","year"] },
+      { target: "block", rhymes: ["aftershock","clock","deadlock","dock","flock","gridlock","hemlock","interlock","knock","livestock","lock","mock","overstock","padlock","peacock","roadblock","rock","shamrock","shock","sock","stock","unlock"] },
+      { target: "nice", rhymes: ["advice","concise","device","dice","entice","ice","mice","paradise","precise","price","rice","sacrifice","slice","spice","splice","suffice","twice","vice"] },
+      { target: "share", rhymes: ["affair","air","anywhere","aware","bare","bear","beware","billionaire","care","chair","compare","dare","debonair","declare","despair","elsewhere","everywhere","fair","fanfare","flair","glare","hair","hardware","heir","impair","millionaire","nightmare","nowhere","pair","pear","prayer","prepare","questionnaire","rare","repair","software","solitaire","somewhere","spare","square","stare","swear","there","threadbare","unaware","underwear","warfare","wear","welfare","wheelchair","where"] },
+      { target: "pink", rhymes: ["blink","brink","clink","drink","ink","link","mink","rethink","rink","shrink","sink","stink","sync","think","wink"] },
+      { target: "space", rhymes: ["ace","base","birthplace","brace","case","chase","commonplace","database","disgrace","displace","embrace","erase","face","fireplace","grace","grimace","interface","lace","marketplace","pace","place","race","replace","staircase","suitcase","trace","workplace"] },
+      { target: "bone", rhymes: ["alone","atone","backbone","blown","clone","cologne","cone","cyclone","dethrone","disown","drone","earphone","flown","groan","grown","headphone","homegrown","hormone","known","loan","microphone","milestone","moan","outgrown","own","ozone","phone","postpone","saxophone","shown","stone","telephone","throne","tone","trombone","unknown","xylophone","zone"] },
+      { target: "song", rhymes: ["along","belong","bong","gong","lifelong","long","oblong","prolong","prong","sarong","singsong","strong","throng","wrong","yearlong"] },
+      { target: "truck", rhymes: ["awestruck","buck","chuck","cluck","duck","dumbstruck","luck","muck","pluck","potluck","puck","starstruck","struck","stuck","suck","thunderstruck","tuck","woodchuck","yuck"] },
+      { target: "deep", rhymes: ["asleep","beep","cheap","creep","heap","jeep","keep","leap","oversleep","peep","reap","seep","sheep","sleep","steep","sweep","upkeep","weep"] },
+      { target: "glue", rhymes: ["accrue","ado","bamboo","blew","blue","brew","canoe","cashew","chew","clue","construe","crew","cue","debut","dew","drew","due","few","flew","fondue","grew","hue","imbue","knew","menu","miscue","new","preview","pursue","renew","rescue","review","shampoo","shoe","stew","subdue","taboo","tattoo","threw","through","true","two","view","voodoo","who","withdrew","you","zoo"] },
+      { target: "bed", rhymes: ["ahead","behead","bread","cornbread","dead","dread","embed","farmstead","fed","figurehead","fled","forehead","gingerbread","head","homestead","infrared","instead","lead","led","misled","misread","overfed","overhead","purebred","read","red","said","shed","shred","sled","spread","thoroughbred","thread","tread","underfed","unsaid","watershed","wed","widespread"] },
+      { target: "smile", rhymes: ["aisle","beguile","bile","compile","crocodile","defile","dial","exile","fertile","file","freestyle","guile","hostile","juvenile","meanwhile","mile","missile","mobile","percentile","pile","profile","reconcile","reptile","senile","style","textile","tile","trial","versatile","vile","while","worthwhile"] },
+      { target: "name", rhymes: ["acclaim","aim","became","blame","came","claim","dame","disclaim","exclaim","fame","flame","frame","game","inflame","lame","mainframe","nickname","overcame","proclaim","reclaim","rename","same","shame","tame","timeframe"] },
+      { target: "hope", rhymes: ["antelope","cope","dope","envelope","grope","horoscope","kaleidoscope","microscope","mope","nope","periscope","pope","rope","scope","slope","telescope","tightrope"] },
+      { target: "beach", rhymes: ["beseech","bleach","breach","each","impeach","leach","outreach","overreach","peach","preach","reach","screech","speech","teach"] },
+      { target: "note", rhymes: ["anecdote","antidote","bloat","boat","coat","denote","devote","dote","float","footnote","gloat","goat","lifeboat","moat","overcoat","promote","quote","remote","sailboat","scapegoat","speedboat","steamboat","throat","topcoat","tote","tugboat","turncoat","undercoat","vote","wrote"] },
+      { target: "cloud", rhymes: ["allowed","aloud","avowed","bowed","crowd","endowed","enshroud","loud","plowed","proud","shroud","thundercloud","vowed"] },
+      { target: "steel", rhymes: ["appeal","conceal","congeal","deal","eel","feel","heal","heel","ideal","kneel","meal","ordeal","peal","peel","real","reel","repeal","reveal","seal","steal","surreal","unreal","veal","wheel","zeal"] },
+      { target: "book", rhymes: ["brook","cook","crook","handbook","hook","look","mistook","nook","notebook","outlook","overlook","rook","shook","textbook","took","undertook","yearbook"] },
+      { target: "born", rhymes: ["acorn","adorn","corn","firstborn","forlorn","horn","lovelorn","mourn","newborn","popcorn","scorn","sworn","thorn","torn","unborn","unicorn","warn","worn"] },
+      { target: "gold", rhymes: ["behold","blindfold","bold","cold","controlled","enfold","fold","hold","household","manifold","mold","old","rolled","sold","told","unfold","uphold","withhold"] },
+      { target: "peak", rhymes: ["antique","beak","bleak","boutique","cheek","chic","creek","critique","discreet","freak","geek","leak","meek","mystique","oblique","physique","reek","seek","sleek","sneak","speak","squeak","streak","technique","tweak","unique","weak","week"] },
+      { target: "dust", rhymes: ["adjust","bust","combust","crust","discussed","disgust","distrust","encrust","entrust","gust","just","lust","mistrust","must","readjust","robust","rust","stardust","thrust","trust","unjust","wanderlust"] },
+      { target: "moon", rhymes: ["afternoon","baboon","balloon","bassoon","bedroom","bloom","boom","boon","bridegroom","cartoon","classroom","cocoon","costume","doom","gloom","groom","harpoon","honeymoon","immune","lagoon","loom","maroon","monsoon","mushroom","noon","platoon","pontoon","prune","raccoon","room","saloon","soon","spoon","swoon","tablespoon","tune","typhoon","zoom"] },
+      { target: "shelf", rhymes: ["bookshelf","elf","health","herself","himself","itself","myself","oneself","self","stealth","thyself","wealth","yourself"] },
+      { target: "ball", rhymes: ["all","appall","baseball","basketball","brawl","call","cannonball","crawl","downfall","enthrall","eyeball","fall","football","freefall","hall","handball","haul","install","mall","nightfall","overall","overhaul","rainfall","recall","shawl","small","snowball","sprawl","stall","tall","wall","waterfall","windfall"] },
+      { target: "seed", rhymes: ["agreed","bleed","breed","concede","creed","decreed","deed","exceed","feed","freed","greed","guaranteed","heed","indeed","intercede","need","plead","precede","proceed","read","reed","speed","stampede","steed","succeed","supersede","weed"] },
+      { target: "grade", rhymes: ["afraid","aid","arcade","barricade","blade","blockade","braid","cascade","charade","crusade","decade","evade","facade","fade","glade","grenade","handmade","homemade","invade","jade","laid","lemonade","maid","marinade","masquerade","mermaid","paid","parade","persuade","promenade","raid","renegade","serenade","shade","spade","stockade","tirade","trade","unpaid","upgrade","wade"] },
+      { target: "stone", rhymes: ["alone","atone","backbone","blown","bone","clone","cobblestone","cologne","cone","cornerstone","cyclone","dethrone","drone","earphone","flagstone","flown","gemstone","gravestone","grindstone","groan","grown","headphone","homegrown","hormone","keystone","known","limestone","loan","microphone","milestone","moan","moonstone","outgrown","own","ozone","phone","postpone","rhinestone","sandstone","saxophone","shown","telephone","throne","tombstone","tone","trombone","unknown","zone"] },
+      { target: "pile", rhymes: ["aisle","beguile","bile","compile","crocodile","defile","dial","exile","file","freestyle","guile","hostile","juvenile","meanwhile","mile","missile","mobile","percentile","profile","reconcile","reptile","smile","style","textile","tile","trial","versatile","vile","while","worthwhile"] },
+      { target: "match", rhymes: ["attach","batch","catch","detach","dispatch","hatch","latch","mismatch","patch","rematch","scratch","snatch","thatch","unattached"] },
+      { target: "drill", rhymes: ["bill","chill","dill","distill","downhill","fill","frill","fulfill","goodwill","grill","hill","ill","instill","kill","landfill","mill","overkill","pill","refill","skill","spill","standstill","still","thrill","till","treadmill","uphill","will","windmill"] },
+      { target: "maze", rhymes: ["ablaze","always","amaze","appraise","blaze","craze","days","daze","displays","gaze","glaze","graze","haze","holidays","laze","malaise","nowadays","paraphrase","phase","phrase","plays","praise","raise","rays","repays","stays","surveys","ways"] },
+      { target: "sail", rhymes: ["ale","avail","bail","bewail","blackmail","cocktail","curtail","dale","derail","detail","email","exhale","fail","female","fingernail","frail","gale","guardrail","hail","handrail","inhale","jail","mail","male","monorail","nail","nightingale","pail","pale","pigtail","ponytail","prevail","rail","retail","scale","snail","stale","tail","tale","toenail","trail","unveil","veil","wail","whale","wholesale"] },
+      { target: "fun", rhymes: ["begun","bun","done","gun","homespun","hon","none","nun","one","outdone","outrun","overcome","overrun","pun","rerun","run","someone","son","spun","stun","sun","ton","undone","won"] },
+      { target: "town", rhymes: ["breakdown","brown","clown","countdown","crown","down","downtown","drown","frown","gown","letdown","lockdown","meltdown","noun","renown","showdown","shutdown","sundown","touchdown","turndown","uptown"] },
+      { target: "wave", rhymes: ["behave","brave","cave","concave","crave","deprave","engrave","enslave","forgave","gave","grave","knave","microwave","misbehave","octave","pave","rave","save","shave","shockwave","slave"] }    ];
 
-    // ─── Rank System ─────────────────────────────────────────────────────
+    // ─── RANKS ───────────────────────────────────────────────────────────
     const RANKS = [
-      { name: "Beginner", emoji: "🎒", threshold: 0 },
-      { name: "Good Start", emoji: "🌱", threshold: 0.05 },
-      { name: "Moving Up", emoji: "🚀", threshold: 0.12 },
-      { name: "Good", emoji: "👍", threshold: 0.20 },
-      { name: "Solid", emoji: "💪", threshold: 0.30 },
-      { name: "Nice", emoji: "✨", threshold: 0.42 },
-      { name: "Great", emoji: "🔥", threshold: 0.55 },
-      { name: "Amazing", emoji: "🌟", threshold: 0.70 },
-      { name: "Genius", emoji: "🧠", threshold: 0.85 },
-      { name: "Rhyme Master", emoji: "👑", threshold: 1.0 },
+      { name: "Beginner", threshold: 0 },
+      { name: "Good Start", threshold: 0.05 },
+      { name: "Moving Up", threshold: 0.12 },
+      { name: "Good", threshold: 0.20 },
+      { name: "Solid", threshold: 0.30 },
+      { name: "Nice", threshold: 0.42 },
+      { name: "Great", threshold: 0.55 },
+      { name: "Amazing", threshold: 0.70 },
+      { name: "Genius", threshold: 0.85 },
+      { name: "Rhyme Master", threshold: 1.0 },
     ];
 
-    function getRank(points, maxPoints) {
-      if (maxPoints === 0) return RANKS[0];
-      const pct = points / maxPoints;
-      let rank = RANKS[0];
-      for (const r of RANKS) { if (pct >= r.threshold) rank = r; }
-      return rank;
+    function getRank(pts, max) {
+      if (max === 0) return RANKS[0];
+      const p = pts / max; let r = RANKS[0];
+      for (const x of RANKS) { if (p >= x.threshold) r = x; }
+      return r;
     }
 
-    function getNextRank(points, maxPoints) {
-      if (maxPoints === 0) return null;
-      const pct = points / maxPoints;
-      for (const r of RANKS) { if (pct < r.threshold) return r; }
-      return null;
+    // ─── DAILY PUZZLE ────────────────────────────────────────────────────
+    function dayNum() { return Math.floor(Date.now() / 86400000); }
+
+    function seeded(s) {
+      let x = s | 0;
+      x = ((x >> 16) ^ x) * 0x45d9f3b | 0;
+      x = ((x >> 16) ^ x) * 0x45d9f3b | 0;
+      x = (x >> 16) ^ x;
+      return (x & 0x7fffffff) / 0x7fffffff;
     }
 
-    // ─── Daily Puzzle Seeding ────────────────────────────────────────────
-    function getDaysSinceEpoch() {
-      return Math.floor(new Date().getTime() / 86400000);
+    function puzzleForDay(offset = 0) {
+      const d = dayNum() + offset;
+      return PUZZLES[Math.floor(seeded(d + 42) * PUZZLES.length) % PUZZLES.length];
     }
 
-    function seededRandom(seed) {
-      let s = seed % 2147483647;
-      if (s <= 0) s += 2147483646;
-      s = (s * 16807) % 2147483647;
-      return (s - 1) / 2147483646;
-    }
-
-    function getPuzzleForDay(dayOffset = 0) {
-      const day = getDaysSinceEpoch() + dayOffset;
-      const idx = Math.floor(seededRandom(day + 42) * PUZZLES.length);
-      return PUZZLES[idx % PUZZLES.length];
-    }
-
-    function getDateString(dayOffset = 0) {
-      const d = new Date();
-      d.setDate(d.getDate() + dayOffset);
+    function dateStr(offset = 0) {
+      const d = new Date(); d.setDate(d.getDate() + offset);
       return d.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
     }
 
-    // ─── localStorage Helpers ────────────────────────────────────────────
-    function getStorageKey(dayOffset = 0) {
-      return `rt-day-${getDaysSinceEpoch() + dayOffset}`;
-    }
+    // ─── STORAGE ─────────────────────────────────────────────────────────
+    const LS = {
+      get: (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+      set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+    };
 
-    function loadGame() {
-      try {
-        const d = localStorage.getItem(getStorageKey());
-        return d ? JSON.parse(d) : null;
-      } catch { return null; }
-    }
+    const gameKey = (off = 0) => `rt-${dayNum() + off}`;
+    const DEF_STATS = { games: 0, wins: 0, ranks: {}, streak: 0, maxStreak: 0, lastDay: 0 };
 
-    function saveGame(found) {
-      try { localStorage.setItem(getStorageKey(), JSON.stringify({ found, ts: Date.now() })); } catch {}
-    }
-
-    function loadStats() {
-      try {
-        const d = localStorage.getItem("rt-stats-v1");
-        return d ? JSON.parse(d) : null;
-      } catch { return null; }
-    }
-
-    function saveStats(stats) {
-      try { localStorage.setItem("rt-stats-v1", JSON.stringify(stats)); } catch {}
-    }
-
-    function loadYesterdayFound() {
-      try {
-        const d = localStorage.getItem(getStorageKey(-1));
-        return d ? JSON.parse(d).found || [] : [];
-      } catch { return []; }
-    }
-
-    const DEFAULT_STATS = { games: 0, wins: 0, ranks: {}, streak: 0, maxStreak: 0, lastDay: 0 };
-
-    // ─── SVG Logo ────────────────────────────────────────────────────────
-    function RhymeMimeLogo({ size = 48 }) {
+    // ─── SVG LOGO ────────────────────────────────────────────────────────
+    function Logo({ size = 40 }) {
       return (
         <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
-          <rect x="8" y="4" width="84" height="92" rx="10" fill="#F3EDF7" stroke="#D4B8E0" strokeWidth="2"/>
-          <path d="M22 16l2 4 4 1-3 3 1 4-4-2-4 2 1-4-3-3 4-1z" fill="#E74C5A"/>
-          <path d="M76 78l2 4 4 1-3 3 1 4-4-2-4 2 1-4-3-3 4-1z" fill="#E74C5A"/>
-          <path d="M30 42c0 0-8-22 5-26s15 16 15 16" fill="#F47B8A" stroke="#E8546A" strokeWidth="1.5"/>
-          <path d="M70 42c0 0 8-22-5-26s-15 16-15 16" fill="#5CB8E4" stroke="#3A9DD1" strokeWidth="1.5"/>
-          <path d="M38 38c0 0 2-24 12-24s12 24 12 24" fill="#F5B731" stroke="#E0A020" strokeWidth="1.5"/>
-          <circle cx="28" cy="44" r="5" fill="#F47B8A"/>
-          <circle cx="72" cy="44" r="5" fill="#3A9DD1"/>
-          <circle cx="50" cy="18" r="5" fill="#F5A623"/>
-          <circle cx="50" cy="58" r="18" fill="#8B5CF6" stroke="#7C3AED" strokeWidth="2"/>
+          <rect x="8" y="4" width="84" height="92" rx="10" fill="#F5F3FF" stroke="#DDD6FE" strokeWidth="2"/>
+          <path d="M22 16l2 4 4 1-3 3 1 4-4-2-4 2 1-4-3-3 4-1z" fill="#F87171"/>
+          <path d="M76 78l2 4 4 1-3 3 1 4-4-2-4 2 1-4-3-3 4-1z" fill="#F87171"/>
+          <path d="M30 42c0 0-8-22 5-26s15 16 15 16" fill="#FB7185" stroke="#E11D48" strokeWidth="1.2"/>
+          <path d="M70 42c0 0 8-22-5-26s-15 16-15 16" fill="#60A5FA" stroke="#2563EB" strokeWidth="1.2"/>
+          <path d="M38 38c0 0 2-24 12-24s12 24 12 24" fill="#FBBF24" stroke="#D97706" strokeWidth="1.2"/>
+          <circle cx="28" cy="44" r="4.5" fill="#FB7185"/>
+          <circle cx="72" cy="44" r="4.5" fill="#60A5FA"/>
+          <circle cx="50" cy="18" r="4.5" fill="#FBBF24"/>
+          <circle cx="50" cy="58" r="18" fill="#7C3AED"/>
           <circle cx="50" cy="58" r="13" fill="white"/>
-          <g stroke="#5B3C88" strokeWidth="2.5" strokeLinecap="round">
+          <g stroke="#4C1D95" strokeWidth="2.5" strokeLinecap="round">
             <line x1="42" y1="53" x2="47" y2="58"/><line x1="47" y1="53" x2="42" y2="58"/>
             <line x1="53" y1="53" x2="58" y2="58"/><line x1="58" y1="53" x2="53" y2="58"/>
           </g>
-          <path d="M44 64c0 0 3 4 6 4s6-4 6-4" stroke="#5B3C88" strokeWidth="2" strokeLinecap="round" fill="none"/>
-          <path d="M37 72c-4 6-10 10-10 14" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" fill="none"/>
-          <path d="M44 74c-2 6-4 12-2 16" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" fill="none"/>
-          <path d="M56 74c2 6 4 12 2 16" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" fill="none"/>
-          <path d="M63 72c4 6 10 10 10 14" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" fill="none"/>
+          <path d="M44 64c0 0 3 4 6 4s6-4 6-4" stroke="#4C1D95" strokeWidth="2" strokeLinecap="round" fill="none"/>
+          <path d="M37 72c-4 6-10 10-10 14" stroke="#7C3AED" strokeWidth="3" strokeLinecap="round" fill="none"/>
+          <path d="M44 74c-2 6-4 12-2 16" stroke="#7C3AED" strokeWidth="3" strokeLinecap="round" fill="none"/>
+          <path d="M56 74c2 6 4 12 2 16" stroke="#7C3AED" strokeWidth="3" strokeLinecap="round" fill="none"/>
+          <path d="M63 72c4 6 10 10 10 14" stroke="#7C3AED" strokeWidth="3" strokeLinecap="round" fill="none"/>
         </svg>
       );
     }
 
-    // ─── Main App ────────────────────────────────────────────────────────
+    // ─── ICON BUTTONS ────────────────────────────────────────────────────
+    function NavIcon({ onClick, title, children }) {
+      return (
+        <button onClick={onClick} title={title} style={{
+          background: "none", border: "none", padding: "8px", borderRadius: 8,
+          color: "#6B7280", display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "color 0.15s",
+        }}
+          onMouseEnter={e => e.currentTarget.style.color = "#6D28D9"}
+          onMouseLeave={e => e.currentTarget.style.color = "#6B7280"}
+        >{children}</button>
+      );
+    }
+
+    // SVG icons (cleaner than emoji)
+    const Icons = {
+      yesterday: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 8 14"/></svg>,
+      stats: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="6" width="4" height="15"/><rect x="17" y="2" width="4" height="19"/></svg>,
+      ranks: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9l6-6 6 6"/><path d="M12 3v18"/></svg>,
+      help: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 115.12 2.13c-.67.56-1.12 1.2-1.12 1.87v1"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg>,
+    };
+
+    // ─── MAIN APP ────────────────────────────────────────────────────────
     function RhymeTime() {
-      const puzzle = useMemo(() => getPuzzleForDay(0), []);
-      const yesterdayPuzzle = useMemo(() => getPuzzleForDay(-1), []);
-      const maxPoints = useMemo(() => puzzle.rhymes.reduce((a, w) => a + w.length, 0), [puzzle]);
+      const puzzle = useMemo(() => puzzleForDay(0), []);
+      const yPuzzle = useMemo(() => puzzleForDay(-1), []);
+      const maxPts = useMemo(() => puzzle.rhymes.reduce((a, w) => a + w.length, 0), [puzzle]);
 
       const [found, setFound] = useState(() => {
-        const saved = loadGame();
-        return saved?.found || [];
+        const saved = LS.get(gameKey());
+        return (saved?.found && saved?.target === puzzle.target) ? saved.found : [];
       });
       const [input, setInput] = useState("");
-      const [message, setMessage] = useState(null);
-      const [messageType, setMessageType] = useState("info");
+      const [msg, setMsg] = useState(null);
+      const [msgType, setMsgType] = useState("info");
       const [shake, setShake] = useState(false);
       const [modal, setModal] = useState(null);
       const [copied, setCopied] = useState(false);
-      const [celebrateRank, setCelebrateRank] = useState(null);
-      const [stats, setStats] = useState(() => loadStats() || DEFAULT_STATS);
-      const [yesterdayFound] = useState(() => loadYesterdayFound());
-      const inputRef = useRef(null);
-      const prevRankRef = useRef(null);
-      const msgTimer = useRef(null);
-      const statsRecorded = useRef(false);
+      const [celebrate, setCelebrate] = useState(null);
+      const [stats, setStats] = useState(() => LS.get("rt-stats-v1") || DEF_STATS);
+      const [yFound] = useState(() => {
+        const saved = LS.get(gameKey(-1));
+        return (saved?.found && saved?.target === yPuzzle.target) ? saved.found : [];
+      });
+      const ref = useRef(null);
+      const prevRank = useRef(null);
+      const msgT = useRef(null);
+      const recorded = useRef(false);
 
-      const points = found.reduce((a, w) => a + w.length, 0);
-      const rank = getRank(points, maxPoints);
-      const nextRank = getNextRank(points, maxPoints);
-      const progressPct = maxPoints > 0 ? (points / maxPoints) * 100 : 0;
-      const allFound = found.length === puzzle.rhymes.length;
+      const pts = found.reduce((a, w) => a + w.length, 0);
+      const rank = getRank(pts, maxPts);
+      const pct = maxPts > 0 ? (pts / maxPts) * 100 : 0;
+      const done = found.length === puzzle.rhymes.length;
 
-      // Save game whenever found changes
+      useEffect(() => { if (found.length > 0) LS.set(gameKey(), { found, target: puzzle.target, ts: Date.now() }); }, [found]);
+
       useEffect(() => {
-        if (found.length > 0) saveGame(found);
-      }, [found]);
-
-      // Rank-up celebration
-      useEffect(() => {
-        if (prevRankRef.current && prevRankRef.current !== rank.name && rank.name !== "Beginner") {
-          setCelebrateRank(rank);
-          setTimeout(() => setCelebrateRank(null), 2200);
+        if (prevRank.current && prevRank.current !== rank.name && rank.name !== "Beginner") {
+          setCelebrate(rank.name);
+          setTimeout(() => setCelebrate(null), 2200);
         }
-        prevRankRef.current = rank.name;
+        prevRank.current = rank.name;
       }, [rank]);
 
-      // Record stats
       useEffect(() => {
-        if (statsRecorded.current) return;
-        if (allFound || rank.name === "Genius") {
-          statsRecorded.current = true;
-          const s = loadStats() || { ...DEFAULT_STATS };
-          const today = getDaysSinceEpoch();
+        if (recorded.current) return;
+        if (done || rank.name === "Genius") {
+          recorded.current = true;
+          const s = LS.get("rt-stats-v1") || { ...DEF_STATS };
+          const today = dayNum();
           if (s.lastDay === today) return;
-          s.games += 1;
-          if (allFound) s.wins += 1;
+          s.games++; if (done) s.wins++;
           s.ranks[rank.name] = (s.ranks[rank.name] || 0) + 1;
-          s.streak = (s.lastDay === today - 1) ? s.streak + 1 : 1;
+          s.streak = s.lastDay === today - 1 ? s.streak + 1 : 1;
           s.maxStreak = Math.max(s.maxStreak, s.streak);
           s.lastDay = today;
-          setStats(s);
-          saveStats(s);
+          setStats(s); LS.set("rt-stats-v1", s);
         }
-      }, [allFound, rank]);
+      }, [done, rank]);
 
-      const showMsg = useCallback((text, type = "info", duration = 2200) => {
-        if (msgTimer.current) clearTimeout(msgTimer.current);
-        setMessage(text);
-        setMessageType(type);
-        msgTimer.current = setTimeout(() => setMessage(null), duration);
+      const flash = useCallback((t, type = "info", dur = 2200) => {
+        if (msgT.current) clearTimeout(msgT.current);
+        setMsg(t); setMsgType(type);
+        msgT.current = setTimeout(() => setMsg(null), dur);
       }, []);
 
-      const triggerShake = useCallback(() => {
-        setShake(true);
-        setTimeout(() => setShake(false), 500);
-      }, []);
+      const submit = useCallback(() => {
+        const g = input.trim().toLowerCase(); setInput("");
+        if (!g) return;
+        if (found.includes(g)) { flash("Already found!", "warn"); setShake(true); setTimeout(() => setShake(false), 500); return; }
+        if (g === puzzle.target) { flash("That's the target word!", "warn"); setShake(true); setTimeout(() => setShake(false), 500); return; }
+        if (puzzle.rhymes.includes(g)) {
+          setFound(p => [...p, g].sort());
+          flash(`+${g.length} pts — "${g}" ✓`, "ok");
+          if (found.length + 1 === puzzle.rhymes.length) setTimeout(() => flash("🎉 You found them all!", "ok", 5000), 600);
+        } else { flash(`"${g}" — not in the list`, "err"); setShake(true); setTimeout(() => setShake(false), 500); }
+        ref.current?.focus();
+      }, [input, found, puzzle, flash]);
 
-      const handleSubmit = useCallback(() => {
-        const guess = input.trim().toLowerCase();
-        setInput("");
-        if (!guess) return;
-        if (found.includes(guess)) { showMsg("Already found!", "warn"); triggerShake(); return; }
-        if (guess === puzzle.target) { showMsg("That's the target word!", "warn"); triggerShake(); return; }
-        if (puzzle.rhymes.includes(guess)) {
-          setFound(prev => [...prev, guess].sort());
-          showMsg(`+${guess.length} pts — "${guess}" ✓`, "success");
-          if (found.length + 1 === puzzle.rhymes.length) {
-            setTimeout(() => showMsg("🎉 You found them all! Rhyme Master!", "success", 5000), 600);
-          }
-        } else { showMsg(`"${guess}" is not a valid rhyme`, "error"); triggerShake(); }
-        inputRef.current?.focus();
-      }, [input, found, puzzle, showMsg, triggerShake]);
-
-      const handleShare = () => {
-        const txt = `🃏 Rhyme Time — ${getDateString()}\n🎯 "${puzzle.target.toUpperCase()}"\n📊 ${found.length}/${puzzle.rhymes.length} words · ${points}/${maxPoints} pts\n${rank.emoji} ${rank.name}\n\nhttps://rhymetime.gg`;
-        navigator.clipboard.writeText(txt).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2500); });
+      const share = () => {
+        const t = `🃏 Rhyme Time — ${dateStr()}\n🎯 "${puzzle.target.toUpperCase()}"\n📊 ${found.length}/${puzzle.rhymes.length} words · ${pts}/${maxPts} pts\n${rank.name}\n\nhttps://rhymetime.gg`;
+        navigator.clipboard.writeText(t).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2500); });
       };
 
-      const yPuzzle = yesterdayPuzzle;
       const yMax = yPuzzle.rhymes.reduce((a, w) => a + w.length, 0);
 
-      const S = {
-        wrapper: { minHeight: "100vh", display: "flex", justifyContent: "center", padding: "12px" },
-        container: { width: "100%", maxWidth: 520, margin: "0 auto", position: "relative" },
-        header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 0", borderBottom: "2px solid #E9E0F0", marginBottom: 20 },
-        headerLeft: { display: "flex", alignItems: "center", gap: 12 },
-        headerRight: { display: "flex", gap: 4 },
-        title: { fontFamily: "'DM Serif Display', serif", fontSize: 26, margin: 0, color: "#2D1B4E", lineHeight: 1.1, letterSpacing: "-0.5px" },
-        date: { margin: 0, fontSize: 12, color: "#9CA3AF", marginTop: 2 },
-        iconBtn: { background: "none", border: "none", fontSize: 22, cursor: "pointer", padding: "6px 8px", borderRadius: 8 },
-        progressSection: { display: "flex", alignItems: "center", gap: 12, marginBottom: 24, padding: "0 4px" },
-        rankLabel: { fontSize: 12, fontWeight: 600, color: "#7C3AED", whiteSpace: "nowrap", minWidth: 90 },
-        progressTrack: { flex: 1, height: 8, background: "#EDE9F3", borderRadius: 99, position: "relative", overflow: "visible" },
-        progressFill: { height: "100%", background: "linear-gradient(90deg, #A78BFA, #7C3AED)", borderRadius: 99, transition: "width 0.5s cubic-bezier(0.4, 0, 0.2, 1)" },
-        progressDot: { position: "absolute", top: "50%", transform: "translate(-50%, -50%)" },
-        dot: { width: 10, height: 10, borderRadius: "50%", border: "2px solid white", transition: "background 0.3s" },
-        pointsLabel: { fontSize: 12, color: "#9CA3AF", whiteSpace: "nowrap", fontWeight: 500 },
-        targetSection: { textAlign: "center", marginBottom: 20 },
-        targetHint: { margin: 0, fontSize: 14, color: "#9CA3AF", letterSpacing: "0.5px", textTransform: "uppercase", fontWeight: 500 },
-        targetWord: { fontFamily: "'DM Serif Display', serif", fontSize: 56, color: "#2D1B4E", margin: "8px 0", letterSpacing: "3px", animation: "popIn 0.4s ease" },
-        targetSub: { margin: 0, fontSize: 14, color: "#7C3AED", fontWeight: 500 },
-        toast: { position: "fixed", top: 80, left: "50%", transform: "translateX(-50%)", padding: "10px 24px", borderRadius: 99, color: "white", fontSize: 15, fontWeight: 600, zIndex: 100, animation: "fadeIn 0.2s ease", boxShadow: "0 4px 20px rgba(0,0,0,0.15)", whiteSpace: "nowrap" },
-        celebrate: { textAlign: "center", marginBottom: 12, animation: "celebrateFade 2.2s ease forwards", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 },
-        celebrateText: { fontFamily: "'DM Serif Display', serif", fontSize: 24, color: "#7C3AED", animation: "celebratePop 0.5s ease" },
-        inputRow: { display: "flex", gap: 10, marginBottom: 16, padding: "0 4px" },
-        input: { flex: 1, padding: "14px 20px", fontSize: 18, borderRadius: 14, border: "2px solid #E9E0F0", background: "white", fontFamily: "'DM Sans', sans-serif", color: "#2D1B4E", transition: "border-color 0.15s, box-shadow 0.15s", letterSpacing: "0.5px" },
-        submitBtn: { padding: "14px 28px", fontSize: 16, fontWeight: 700, borderRadius: 14, border: "none", background: "#7C3AED", color: "white", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.5px" },
-        actions: { display: "flex", justifyContent: "center", gap: 10, marginBottom: 20 },
-        actionBtn: { padding: "8px 18px", fontSize: 13, fontWeight: 600, borderRadius: 99, border: "1.5px solid #E9E0F0", background: "white", cursor: "pointer", color: "#5B4580", fontFamily: "'DM Sans', sans-serif" },
-        foundSection: { background: "white", borderRadius: 16, border: "1.5px solid #E9E0F0", overflow: "hidden", marginBottom: 16 },
-        foundHeader: { padding: "14px 20px", borderBottom: "1px solid #F3EDF7" },
-        foundTitle: { fontSize: 14, fontWeight: 600, color: "#7C3AED" },
-        wordGrid: { padding: "12px 16px 16px", display: "flex", flexWrap: "wrap", gap: 8 },
-        wordChip: { padding: "6px 14px", borderRadius: 99, fontSize: 14, fontWeight: 500, background: "#F3EAFF", color: "#5B21B6", border: "1px solid #DDD6FE", display: "inline-flex", alignItems: "center", gap: 6, animation: "popIn 0.25s ease both" },
-        chipPts: { fontSize: 11, color: "#A78BFA", fontWeight: 700 },
-        remainHint: { textAlign: "center", fontSize: 13, color: "#B0A0C0", marginBottom: 16 },
-        coffeeLink: { display: "inline-flex", alignItems: "center", gap: 8, padding: "9px 20px", borderRadius: 99, fontSize: 13, fontWeight: 600, color: "#7C3AED", background: "#F9F5FF", border: "1.5px solid #E9E0F0", textDecoration: "none", cursor: "pointer" },
-        overlay: { position: "fixed", inset: 0, background: "rgba(45, 27, 78, 0.4)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20, animation: "fadeIn 0.2s ease" },
-        modal: { background: "white", borderRadius: 20, padding: "28px 28px 24px", maxWidth: 440, width: "100%", maxHeight: "85vh", overflowY: "auto", position: "relative", boxShadow: "0 20px 60px rgba(45, 27, 78, 0.2)", animation: "popIn 0.3s ease" },
-        closeBtn: { position: "absolute", top: 16, right: 16, background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#9CA3AF", padding: "4px 8px", borderRadius: 8 },
-        modalTitle: { fontFamily: "'DM Serif Display', serif", fontSize: 24, color: "#2D1B4E", marginBottom: 12, marginTop: 0 },
-        modalBody: { color: "#4B5563", fontSize: 15, lineHeight: 1.7 },
-        ruleList: { display: "flex", flexDirection: "column", gap: 12, marginTop: 16 },
-        rule: { display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: "#374151" },
-        ruleIcon: { fontSize: 18, flexShrink: 0 },
-        rankList: { display: "flex", flexDirection: "column", gap: 6 },
-        rankItem: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #E5E7EB", fontSize: 14 },
-        statsGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 },
-        statCard: { background: "#F9F5FF", borderRadius: 14, padding: "16px 12px", textAlign: "center", border: "1.5px solid #E9E0F0" },
-        statNum: { fontSize: 30, fontWeight: 700, color: "#7C3AED" },
-        statLabel: { fontSize: 11, color: "#9CA3AF", fontWeight: 600, marginTop: 4 },
-        mimeSays: { textAlign: "center", marginTop: 20, padding: 16, background: "#F9F5FF", borderRadius: 14, border: "1.5px solid #E9E0F0", display: "flex", alignItems: "center", gap: 12 },
-        mimeSaysText: { margin: 0, fontSize: 13, color: "#7C3AED", fontWeight: 500, lineHeight: 1.5, textAlign: "left" },
-        footer: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "20px 0 12px", fontSize: 12, color: "#C4B5D4", fontWeight: 500, letterSpacing: "1px", textTransform: "uppercase" },
-      };
-
       return (
-        <div style={S.wrapper}>
-          <div style={S.container}>
+        <div style={S.page}>
+          <div style={S.app}>
+            {/* ─── HEADER ─── */}
             <header style={S.header}>
-              <div style={S.headerLeft}>
-                <RhymeMimeLogo size={40} />
+              <div style={S.brand}>
+                <Logo size={36} />
                 <div>
                   <h1 style={S.title}>Rhyme Time</h1>
-                  <p style={S.date}>{getDateString()}</p>
+                  <p style={S.subtitle}>{dateStr()}</p>
                 </div>
               </div>
-              <div style={S.headerRight}>
-                <button style={S.iconBtn} onClick={() => setModal("yesterday")} title="Yesterday's Answers">⏪</button>
-                <button style={S.iconBtn} onClick={() => setModal("stats")} title="Statistics">📊</button>
-                <button style={S.iconBtn} onClick={() => setModal("ranks")} title="Rankings">🏆</button>
-                <button style={S.iconBtn} onClick={() => setModal("how")} title="How to Play">❓</button>
-              </div>
+              <nav style={S.nav}>
+                <NavIcon onClick={() => setModal("yesterday")} title="Yesterday">{Icons.yesterday}</NavIcon>
+                <NavIcon onClick={() => setModal("stats")} title="Stats">{Icons.stats}</NavIcon>
+                <NavIcon onClick={() => setModal("ranks")} title="Rankings">{Icons.ranks}</NavIcon>
+                <NavIcon onClick={() => setModal("how")} title="How to Play">{Icons.help}</NavIcon>
+              </nav>
             </header>
 
-            <div style={S.progressSection}>
-              <span style={S.rankLabel}>{rank.emoji} {rank.name}</span>
-              <div style={S.progressTrack}>
-                <div style={{...S.progressFill, width: `${Math.min(progressPct, 100)}%`}} />
+            <div style={S.divider} />
+
+            {/* ─── PROGRESS ─── */}
+            <div style={S.progress}>
+              <span style={S.rankBadge}>{rank.name}</span>
+              <div style={S.track}>
+                <div style={{...S.fill, width: `${Math.min(pct, 100)}%`}} />
                 {RANKS.slice(1).map((r, i) => (
-                  <div key={i} style={{...S.progressDot, left: `${r.threshold * 100}%`}}>
-                    <div style={{...S.dot, background: points / maxPoints >= r.threshold ? "#7C3AED" : "#D4C6E0"}} />
+                  <div key={i} style={{...S.marker, left: `${r.threshold * 100}%`}}>
+                    <div style={{width: 6, height: 6, borderRadius: "50%", border: "2px solid #fff",
+                      background: pts/maxPts >= r.threshold ? "#6D28D9" : "#D1D5DB", transition: "background 0.3s"}} />
                   </div>
                 ))}
               </div>
-              <span style={S.pointsLabel}>{points}/{maxPoints}</span>
+              <span style={S.ptsLabel}>{pts}/{maxPts}</span>
             </div>
 
-            <div style={S.targetSection}>
-              <p style={S.targetHint}>Find words that rhyme with:</p>
-              <div style={S.targetWord}>{puzzle.target.toUpperCase()}</div>
-              <p style={S.targetSub}>{found.length} of {puzzle.rhymes.length} words found</p>
+            {/* ─── TARGET ─── */}
+            <div style={S.targetArea}>
+              <p style={S.targetHint}>Find words that rhyme with</p>
+              <h2 style={S.targetWord}>{puzzle.target}</h2>
+              <p style={S.targetCount}>{found.length} of {puzzle.rhymes.length} words found</p>
             </div>
 
-            {message && (
-              <div style={{...S.toast, background: messageType === "success" ? "#059669" : messageType === "error" ? "#DC2626" : messageType === "warn" ? "#D97706" : "#6B7280"}}>{message}</div>
-            )}
+            {/* ─── TOAST ─── */}
+            {msg && <div style={{...S.toast,
+              background: msgType === "ok" ? "#059669" : msgType === "err" ? "#DC2626" : msgType === "warn" ? "#D97706" : "#6B7280"
+            }}>{msg}</div>}
 
-            {celebrateRank && (
-              <div style={S.celebrate}>
-                <span style={{fontSize: 40}}>{celebrateRank.emoji}</span>
-                <span style={S.celebrateText}>{celebrateRank.name}!</span>
-              </div>
-            )}
+            {/* ─── RANK CELEBRATE ─── */}
+            {celebrate && <div style={S.celebWrap}><span style={S.celebText}>{celebrate}!</span></div>}
 
-            <div style={{...S.inputRow, animation: shake ? "shake 0.4s ease" : "none"}}>
-              <input ref={inputRef} type="text" value={input}
-                onChange={(e) => setInput(e.target.value.replace(/[^a-zA-Z]/g, ""))}
-                onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                placeholder={allFound ? "All words found! 🎉" : "Type a rhyme..."}
-                style={S.input} autoFocus autoComplete="off" autoCapitalize="off" spellCheck="false" disabled={allFound}
+            {/* ─── INPUT ─── */}
+            <div style={{...S.inputWrap, animation: shake ? "shake 0.4s ease" : "none"}}>
+              <input ref={ref} type="text" value={input}
+                onChange={e => setInput(e.target.value.replace(/[^a-zA-Z]/g, ""))}
+                onKeyDown={e => e.key === "Enter" && submit()}
+                placeholder={done ? "All found! 🎉" : "Type a rhyme..."}
+                style={S.input} autoFocus autoComplete="off" autoCapitalize="off" spellCheck="false" disabled={done}
               />
-              <button onClick={handleSubmit} style={{...S.submitBtn, opacity: input.length > 0 ? 1 : 0.5}} disabled={allFound || input.length === 0}>Enter</button>
+              <button onClick={submit} disabled={done || !input}
+                style={{...S.enterBtn, opacity: input ? 1 : 0.4}}>Enter</button>
             </div>
 
+            {/* ─── ACTIONS ─── */}
             <div style={S.actions}>
-              <button style={S.actionBtn} onClick={() => { setInput(""); inputRef.current?.focus(); }}>🔄 Clear</button>
-              <button style={S.actionBtn} onClick={handleShare}>{copied ? "✅ Copied!" : "📤 Share"}</button>
-              {allFound && <button style={{...S.actionBtn, background: "#7C3AED", color: "white"}} onClick={() => setModal("answers")}>👑 View All</button>}
+              <button style={S.pill} onClick={() => { setInput(""); ref.current?.focus(); }}>Clear</button>
+              <button style={S.pill} onClick={share}>{copied ? "✅ Copied!" : "Share"}</button>
+              {done && <button style={{...S.pill, background: "#6D28D9", color: "#fff", borderColor: "#6D28D9"}} onClick={() => setModal("answers")}>View All</button>}
             </div>
 
-            <div style={S.foundSection}>
-              <div style={S.foundHeader}>
-                <span style={S.foundTitle}>{found.length === 0 ? "Your words will appear here" : `Found Words (${found.length})`}</span>
+            {/* ─── FOUND WORDS ─── */}
+            <div style={S.foundBox}>
+              <div style={S.foundHead}>
+                <span style={S.foundLabel}>{found.length === 0 ? "Your words will appear here" : `Found Words (${found.length})`}</span>
               </div>
               {found.length > 0 && (
-                <div style={S.wordGrid}>
+                <div style={S.chips}>
                   {found.map((w, i) => (
-                    <span key={w} style={{...S.wordChip, animationDelay: `${i * 0.03}s`}}>
-                      {w}<span style={S.chipPts}>+{w.length}</span>
+                    <span key={w} style={{...S.chip, animationDelay: `${i*0.02}s`}}>
+                      {w}<span style={S.chipPt}>+{w.length}</span>
                     </span>
                   ))}
                 </div>
               )}
             </div>
 
-            {found.length > 0 && !allFound && (
-              <p style={S.remainHint}>{puzzle.rhymes.length - found.length} word{puzzle.rhymes.length - found.length !== 1 ? "s" : ""} remaining</p>
+            {found.length > 0 && !done && (
+              <p style={S.remain}>{puzzle.rhymes.length - found.length} remaining</p>
             )}
 
-            <div style={{textAlign: "center", margin: "8px 0 16px"}}>
-              <a href="https://buymeacoffee.com/rhymetime" target="_blank" rel="noopener noreferrer" style={S.coffeeLink}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{flexShrink:0}}>
-                  <path d="M4 19h14a1 1 0 001-1v-1a5 5 0 00-5-5H8a5 5 0 00-5 5v1a1 1 0 001 1z" fill="#FFDD00" stroke="#5B3C88" strokeWidth="1.2"/>
-                  <path d="M17 12h1a3 3 0 010 6h-1" stroke="#5B3C88" strokeWidth="1.2" strokeLinecap="round"/>
-                  <path d="M7 8c0-1.5 2-2 2-3.5M11 8c0-1.5 2-2 2-3.5" stroke="#5B3C88" strokeWidth="1.2" strokeLinecap="round"/>
-                </svg>
-                <span>Buy Us a Coffee</span>
-              </a>
-            </div>
+            {/* ─── FOOTER ─── */}
+            <footer style={S.footer}>
+              <div style={S.footerInner}>
+                <Logo size={18} />
+                <span>Rhyme Time</span>
+                <span style={{color: "#D1D5DB"}}>·</span>
+                <a href="https://buymeacoffee.com/rhymetime" target="_blank" rel="noopener noreferrer"
+                  style={S.coffeeLink}>Buy us a coffee ☕</a>
+              </div>
+            </footer>
 
-            {/* ════ MODALS ════ */}
+            {/* ═══════════════ MODALS ═══════════════ */}
             {modal && (
               <div style={S.overlay} onClick={() => setModal(null)}>
                 <div style={S.modal} onClick={e => e.stopPropagation()}>
-                  <button style={S.closeBtn} onClick={() => setModal(null)}>✕</button>
+                  <button style={S.closeX} onClick={() => setModal(null)}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
 
-                  {modal === "how" && (<>
-                    <div style={{textAlign: "center", marginBottom: 16}}><RhymeMimeLogo size={56} /></div>
-                    <h2 style={S.modalTitle}>How to Play</h2>
-                    <div style={S.modalBody}>
-                      <p>Find all the words that rhyme with the <strong>target word</strong>.</p>
-                      <div style={S.ruleList}>
-                        <div style={S.rule}><span style={S.ruleIcon}>🎯</span><span>Type a word that rhymes with the target and press Enter</span></div>
-                        <div style={S.rule}><span style={S.ruleIcon}>📏</span><span>Each word scores points equal to its number of letters</span></div>
-                        <div style={S.rule}><span style={S.ruleIcon}>📈</span><span>Earn points to climb ranks from Beginner to Rhyme Master</span></div>
-                        <div style={S.rule}><span style={S.ruleIcon}>📖</span><span>Only common English words are accepted</span></div>
-                        <div style={S.rule}><span style={S.ruleIcon}>🔄</span><span>A new puzzle appears every day at midnight!</span></div>
-                        <div style={S.rule}><span style={S.ruleIcon}>⏪</span><span>Tap ⏪ to see yesterday's answers</span></div>
-                        <div style={S.rule}><span style={S.ruleIcon}>📊</span><span>Track your stats across games with 📊</span></div>
-                      </div>
+                  {/* HOW TO PLAY */}
+                  {modal === "how" && <>
+                    <div style={{textAlign: "center", marginBottom: 20}}><Logo size={52} /></div>
+                    <h2 style={S.mTitle}>How to Play</h2>
+                    <p style={S.mBody}>Find all the words that rhyme with the <strong>target word</strong>. Both short and multi-syllable words count — if it rhymes, it scores!</p>
+                    <div style={S.rules}>
+                      {[
+                        ["🎯", "Type a rhyming word and press Enter"],
+                        ["📏", "Score points equal to the word's letter count"],
+                        ["📈", "Climb 10 ranks from Beginner to Rhyme Master"],
+                        ["🔤", "Multi-syllable words count — 'impressed' rhymes with 'best'"],
+                        ["🔄", "New puzzle daily at midnight"],
+                      ].map(([ic, txt], i) => (
+                        <div key={i} style={S.ruleRow}><span style={{fontSize: 17, flexShrink: 0}}>{ic}</span><span>{txt}</span></div>
+                      ))}
                     </div>
-                    <div style={S.mimeSays}>
-                      <RhymeMimeLogo size={28} />
-                      <p style={S.mimeSaysText}>
-                        <em>"Don't overthink, just let words flow —<br/>
-                        if it sounds right, give it a go!<br/>
-                        Each rhyme you find will raise your score,<br/>
-                        so type away and find some more!"</em>
-                      </p>
+                    <div style={S.mimeBox}>
+                      <Logo size={26} />
+                      <p style={S.mimeText}><em>"Don't overthink, just let words flow —<br/>if it sounds right, give it a go!<br/>Each rhyme you find will raise your score,<br/>so type away and find some more!"</em></p>
                     </div>
-                  </>)}
+                  </>}
 
-                  {modal === "ranks" && (<>
-                    <h2 style={S.modalTitle}>Rankings</h2>
-                    <p style={{color: "#6B7280", marginBottom: 16, fontSize: 14}}>Ranks are based on percentage of total possible points ({maxPoints} pts today).</p>
-                    <div style={S.rankList}>
+                  {/* RANKINGS */}
+                  {modal === "ranks" && <>
+                    <h2 style={S.mTitle}>Rankings</h2>
+                    <p style={{color: "#9CA3AF", fontSize: 13, marginBottom: 14}}>Based on % of {maxPts} possible points today.</p>
+                    <div style={{display: "flex", flexDirection: "column", gap: 5}}>
                       {RANKS.map((r, i) => {
-                        const pts = Math.ceil(r.threshold * maxPoints);
-                        const isCurrent = rank.name === r.name;
+                        const cur = rank.name === r.name;
                         return (
-                          <div key={i} style={{...S.rankItem, background: isCurrent ? "#F3EAFF" : "transparent", borderColor: isCurrent ? "#7C3AED" : "#E5E7EB", fontWeight: isCurrent ? 700 : 400}}>
-                            <span>{r.emoji} {r.name}</span>
-                            <span style={{color: "#9CA3AF"}}>{pts} pts ({Math.round(r.threshold * 100)}%)</span>
+                          <div key={i} style={{display: "flex", justifyContent: "space-between", padding: "10px 14px", borderRadius: 10,
+                            border: cur ? "2px solid #6D28D9" : "1px solid #E5E7EB",
+                            background: cur ? "#F5F3FF" : "transparent", fontWeight: cur ? 700 : 400, fontSize: 14}}>
+                            <span>{r.name}</span>
+                            <span style={{color: "#9CA3AF"}}>{Math.ceil(r.threshold * maxPts)} pts · {Math.round(r.threshold * 100)}%</span>
                           </div>
                         );
                       })}
                     </div>
-                  </>)}
+                  </>}
 
-                  {modal === "answers" && (<>
-                    <h2 style={S.modalTitle}>All Rhymes for "{puzzle.target}"</h2>
-                    <div style={S.wordGrid}>
+                  {/* ANSWERS */}
+                  {modal === "answers" && <>
+                    <h2 style={S.mTitle}>All Rhymes for "{puzzle.target}"</h2>
+                    <div style={S.chips}>
                       {[...puzzle.rhymes].sort().map(w => (
-                        <span key={w} style={{...S.wordChip, background: found.includes(w) ? "#ECFDF5" : "#FEF2F2", borderColor: found.includes(w) ? "#6EE7B7" : "#FECACA"}}>
+                        <span key={w} style={{...S.chip,
+                          background: found.includes(w) ? "#ECFDF5" : "#FEF2F2",
+                          borderColor: found.includes(w) ? "#86EFAC" : "#FECACA"}}>
                           {found.includes(w) ? "✓ " : "✗ "}{w}
                         </span>
                       ))}
                     </div>
-                  </>)}
+                  </>}
 
-                  {modal === "stats" && (<>
-                    <h2 style={S.modalTitle}>Statistics</h2>
-                    <div style={S.statsGrid}>
-                      <div style={S.statCard}><div style={S.statNum}>{stats.games}</div><div style={S.statLabel}>Games</div></div>
-                      <div style={S.statCard}><div style={S.statNum}>{stats.wins}</div><div style={S.statLabel}>Wins</div></div>
-                      <div style={S.statCard}><div style={S.statNum}>{stats.streak}</div><div style={S.statLabel}>Streak</div></div>
-                      <div style={S.statCard}><div style={S.statNum}>{stats.maxStreak}</div><div style={S.statLabel}>Best Streak</div></div>
+                  {/* STATS */}
+                  {modal === "stats" && <>
+                    <h2 style={S.mTitle}>Statistics</h2>
+                    <div style={{display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, marginTop: 12}}>
+                      {[["games","Played"],[stats.wins,"Wins"],[stats.streak,"Streak"],[stats.maxStreak,"Best"]].map(([v, l], i) => (
+                        <div key={i} style={{textAlign: "center", padding: "14px 6px", background: "#F9FAFB", borderRadius: 12, border: "1px solid #E5E7EB"}}>
+                          <div style={{fontSize: 26, fontWeight: 700, color: "#6D28D9"}}>{typeof v === "string" ? stats[v] : v}</div>
+                          <div style={{fontSize: 11, color: "#9CA3AF", fontWeight: 600, marginTop: 2}}>{l}</div>
+                        </div>
+                      ))}
                     </div>
-                    <h3 style={{fontSize: 14, color: "#5B4580", marginTop: 20, marginBottom: 10}}>Rank Distribution</h3>
-                    <div style={{display: "flex", flexDirection: "column", gap: 4}}>
+                    <h3 style={{fontSize: 13, color: "#6B7280", marginTop: 20, marginBottom: 8}}>Rank Distribution</h3>
+                    <div style={{display: "flex", flexDirection: "column", gap: 3}}>
                       {RANKS.map((r, i) => {
-                        const cnt = stats.ranks[r.name] || 0;
-                        const maxCnt = Math.max(1, ...Object.values(stats.ranks).map(Number));
+                        const c = stats.ranks[r.name] || 0;
+                        const mx = Math.max(1, ...Object.values(stats.ranks).map(Number));
                         return (
-                          <div key={i} style={{display: "flex", alignItems: "center", gap: 8, fontSize: 13}}>
-                            <span style={{width: 80, textAlign: "right", color: "#8B7FA3", flexShrink: 0}}>{r.emoji} {r.name}</span>
-                            <div style={{flex: 1, height: 18, background: "#F3EAFF", borderRadius: 99, overflow: "hidden"}}>
-                              <div style={{height: "100%", width: `${cnt > 0 ? Math.max(8, (cnt/maxCnt)*100) : 0}%`, background: "linear-gradient(90deg, #A78BFA, #7C3AED)", borderRadius: 99}} />
+                          <div key={i} style={{display: "flex", alignItems: "center", gap: 8, fontSize: 12}}>
+                            <span style={{width: 75, textAlign: "right", color: "#9CA3AF", flexShrink: 0}}>{r.name}</span>
+                            <div style={{flex: 1, height: 16, background: "#F3F4F6", borderRadius: 99, overflow: "hidden"}}>
+                              <div style={{height: "100%", width: `${c > 0 ? Math.max(6, (c/mx)*100) : 0}%`, background: "linear-gradient(90deg, #A78BFA, #6D28D9)", borderRadius: 99}} />
                             </div>
-                            <span style={{width: 24, color: "#7C3AED", fontWeight: 600, textAlign: "right"}}>{cnt}</span>
+                            <span style={{width: 20, color: "#6D28D9", fontWeight: 600, textAlign: "right"}}>{c}</span>
                           </div>
                         );
                       })}
                     </div>
-                    <div style={S.mimeSays}>
-                      <RhymeMimeLogo size={24} />
-                      <p style={S.mimeSaysText}><em>"Your stats are here, both high and low —<br/>keep playing daily, watch them grow!"</em></p>
+                    <div style={S.mimeBox}>
+                      <Logo size={22} />
+                      <p style={S.mimeText}><em>"Your stats are here, both high and low —<br/>keep playing daily, watch them grow!"</em></p>
                     </div>
-                  </>)}
+                  </>}
 
-                  {modal === "yesterday" && (<>
-                    <h2 style={S.modalTitle}>Yesterday's Answers</h2>
-                    <p style={{color: "#9CA3AF", fontSize: 13, marginBottom: 6}}>{getDateString(-1)}</p>
-                    <div style={{textAlign: "center", margin: "12px 0 18px"}}>
-                      <div style={{fontFamily: "'DM Serif Display', serif", fontSize: 38, color: "#2D1B4E", letterSpacing: "3px"}}>{yPuzzle.target.toUpperCase()}</div>
-                      <p style={{margin: "4px 0 0", fontSize: 13, color: "#9CA3AF"}}>{yPuzzle.rhymes.length} words · {yMax} points</p>
+                  {/* YESTERDAY */}
+                  {modal === "yesterday" && <>
+                    <h2 style={S.mTitle}>Yesterday's Answers</h2>
+                    <p style={{color: "#9CA3AF", fontSize: 13, marginBottom: 8}}>{dateStr(-1)}</p>
+                    <div style={{textAlign: "center", margin: "10px 0 18px"}}>
+                      <div style={{fontFamily: "'Instrument Serif', serif", fontSize: 34, color: "#1a1a2e", letterSpacing: 2}}>{yPuzzle.target}</div>
+                      <p style={{margin: "2px 0 0", fontSize: 12, color: "#9CA3AF"}}>{yPuzzle.rhymes.length} words · {yMax} pts</p>
                     </div>
-                    <div style={S.wordGrid}>
+                    <div style={S.chips}>
                       {[...yPuzzle.rhymes].sort().map(w => {
-                        const wasFound = yesterdayFound.includes(w);
+                        const f = yFound.includes(w);
                         return (
-                          <span key={w} style={{...S.wordChip, background: wasFound ? "#ECFDF5" : "#FFF7ED", borderColor: wasFound ? "#6EE7B7" : "#FED7AA", fontWeight: wasFound ? 600 : 400}}>
-                            {wasFound && <span style={{color: "#059669"}}>✓ </span>}{w}
+                          <span key={w} style={{...S.chip, background: f ? "#ECFDF5" : "#FFFBEB",
+                            borderColor: f ? "#86EFAC" : "#FDE68A", fontWeight: f ? 600 : 400}}>
+                            {f && <span style={{color: "#059669"}}>✓ </span>}{w}
                           </span>
                         );
                       })}
                     </div>
-                    {yesterdayFound.length > 0 && (
-                      <p style={{textAlign: "center", marginTop: 14, fontSize: 14, color: "#7C3AED", fontWeight: 600}}>You found {yesterdayFound.length} of {yPuzzle.rhymes.length} words yesterday!</p>
-                    )}
-                    <div style={S.mimeSays}>
-                      <RhymeMimeLogo size={24} />
-                      <p style={S.mimeSaysText}><em>"Yesterday's done, the answers are shown —<br/>today's fresh puzzle awaits on its throne!"</em></p>
+                    {yFound.length > 0 && <p style={{textAlign: "center", marginTop: 14, fontSize: 13, color: "#6D28D9", fontWeight: 600}}>
+                      You found {yFound.length} of {yPuzzle.rhymes.length} yesterday
+                    </p>}
+                    <div style={S.mimeBox}>
+                      <Logo size={22} />
+                      <p style={S.mimeText}><em>"Yesterday's done, the answers are shown —<br/>today's fresh puzzle awaits on its throne!"</em></p>
                     </div>
-                  </>)}
+                  </>}
                 </div>
               </div>
             )}
-
-            <footer style={S.footer}><RhymeMimeLogo size={20} /><span>Rhyme Time</span></footer>
           </div>
         </div>
       );
     }
+
+    // ─── STYLES ──────────────────────────────────────────────────────────
+    const S = {
+      page: { minHeight: "100vh", display: "flex", justifyContent: "center", padding: "0 16px" },
+      app: { width: "100%", maxWidth: 500, margin: "0 auto", paddingBottom: 40 },
+      header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 0 12px" },
+      brand: { display: "flex", alignItems: "center", gap: 12 },
+      title: { fontFamily: "'Instrument Serif', serif", fontSize: 24, margin: 0, color: "#1a1a2e", lineHeight: 1.1, letterSpacing: "-0.3px" },
+      subtitle: { margin: 0, fontSize: 12, color: "#9CA3AF", marginTop: 2 },
+      nav: { display: "flex", gap: 2 },
+      divider: { height: 1, background: "#E5E7EB", marginBottom: 24 },
+      progress: { display: "flex", alignItems: "center", gap: 12, marginBottom: 28, padding: "0 2px" },
+      rankBadge: { fontSize: 11, fontWeight: 700, color: "#6D28D9", whiteSpace: "nowrap", minWidth: 72, textTransform: "uppercase", letterSpacing: "0.5px" },
+      track: { flex: 1, height: 6, background: "#E5E7EB", borderRadius: 99, position: "relative", overflow: "visible" },
+      fill: { height: "100%", background: "linear-gradient(90deg, #A78BFA, #6D28D9)", borderRadius: 99, transition: "width 0.5s cubic-bezier(0.4,0,0.2,1)" },
+      marker: { position: "absolute", top: "50%", transform: "translate(-50%, -50%)" },
+      ptsLabel: { fontSize: 12, color: "#9CA3AF", whiteSpace: "nowrap", fontWeight: 500, minWidth: 48, textAlign: "right" },
+      targetArea: { textAlign: "center", marginBottom: 28 },
+      targetHint: { margin: 0, fontSize: 13, color: "#9CA3AF", letterSpacing: "0.3px", fontWeight: 500 },
+      targetWord: { fontFamily: "'DM Serif Display', serif", fontSize: 52, color: "#1a1a2e", margin: "6px 0", letterSpacing: "2px", animation: "popIn 0.4s ease", fontWeight: 400 },
+      targetCount: { margin: 0, fontSize: 14, color: "#6D28D9", fontWeight: 600 },
+      toast: { position: "fixed", top: 80, left: "50%", transform: "translateX(-50%)", padding: "9px 22px", borderRadius: 99, color: "#fff", fontSize: 14, fontWeight: 600, zIndex: 100, animation: "fadeIn 0.2s ease", boxShadow: "0 4px 16px rgba(0,0,0,0.12)", whiteSpace: "nowrap" },
+      celebWrap: { textAlign: "center", marginBottom: 12, animation: "celebrateFade 2.2s ease forwards" },
+      celebText: { fontFamily: "'Instrument Serif', serif", fontSize: 22, color: "#6D28D9" },
+      inputWrap: { display: "flex", gap: 10, marginBottom: 14 },
+      input: { flex: 1, padding: "13px 18px", fontSize: 17, borderRadius: 12, border: "1.5px solid #D1D5DB", background: "#fff", fontFamily: "'DM Sans', sans-serif", color: "#1a1a2e", transition: "border-color 0.15s, box-shadow 0.15s" },
+      enterBtn: { padding: "13px 24px", fontSize: 15, fontWeight: 700, borderRadius: 12, border: "none", background: "#6D28D9", color: "#fff", fontFamily: "'DM Sans', sans-serif", transition: "opacity 0.15s" },
+      actions: { display: "flex", justifyContent: "center", gap: 8, marginBottom: 24 },
+      pill: { padding: "7px 18px", fontSize: 13, fontWeight: 600, borderRadius: 99, border: "1.5px solid #D1D5DB", background: "#fff", color: "#374151", fontFamily: "'DM Sans', sans-serif" },
+      foundBox: { background: "#fff", borderRadius: 14, border: "1px solid #E5E7EB", overflow: "hidden", marginBottom: 12 },
+      foundHead: { padding: "13px 18px", borderBottom: "1px solid #F3F4F6" },
+      foundLabel: { fontSize: 13, fontWeight: 600, color: "#6D28D9" },
+      chips: { padding: "12px 14px 14px", display: "flex", flexWrap: "wrap", gap: 6 },
+      chip: { padding: "5px 12px", borderRadius: 99, fontSize: 13, fontWeight: 500, background: "#F5F3FF", color: "#4C1D95", border: "1px solid #DDD6FE", display: "inline-flex", alignItems: "center", gap: 5, animation: "popIn 0.2s ease both" },
+      chipPt: { fontSize: 10, color: "#A78BFA", fontWeight: 700 },
+      remain: { textAlign: "center", fontSize: 12, color: "#9CA3AF", marginBottom: 12 },
+      footer: { padding: "24px 0 8px" },
+      footerInner: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 12, color: "#9CA3AF", fontWeight: 500 },
+      coffeeLink: { color: "#6D28D9", textDecoration: "none", fontWeight: 600 },
+      overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", backdropFilter: "blur(3px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20, animation: "fadeIn 0.15s ease" },
+      modal: { background: "#fff", borderRadius: 18, padding: "28px 26px 24px", maxWidth: 420, width: "100%", maxHeight: "85vh", overflowY: "auto", position: "relative", boxShadow: "0 16px 48px rgba(0,0,0,0.12)", animation: "slideUp 0.25s ease" },
+      closeX: { position: "absolute", top: 16, right: 16, background: "none", border: "none", color: "#9CA3AF", padding: 4, borderRadius: 6, display: "flex" },
+      mTitle: { fontFamily: "'Instrument Serif', serif", fontSize: 22, color: "#1a1a2e", marginBottom: 10, marginTop: 0 },
+      mBody: { color: "#6B7280", fontSize: 14, lineHeight: 1.7, marginBottom: 4 },
+      rules: { display: "flex", flexDirection: "column", gap: 10, marginTop: 14 },
+      ruleRow: { display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: "#374151" },
+      mimeBox: { marginTop: 20, padding: 14, background: "#F9FAFB", borderRadius: 12, border: "1px solid #E5E7EB", display: "flex", alignItems: "center", gap: 12 },
+      mimeText: { margin: 0, fontSize: 12, color: "#6D28D9", fontWeight: 500, lineHeight: 1.5, textAlign: "left" },
+    };
 
     ReactDOM.createRoot(document.getElementById("root")).render(<RhymeTime />);
   </script>
