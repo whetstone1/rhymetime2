@@ -8,13 +8,13 @@
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Rhyme Time — A Daily Word Game" />
   <meta property="og:description" content="Find all the rhymes! A new puzzle every day. How many can you get?" />
-  <meta property="og:image" content="https://rhymetime.gg/og-image.png" />
-  <meta property="og:url" content="https://rhymetime.gg" />
+  <meta property="og:image" content="https://rhymetime.xyz/og-image.png" />
+  <meta property="og:url" content="https://rhymetime.xyz" />
   <meta property="og:site_name" content="Rhyme Time" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Rhyme Time — A Daily Word Game" />
   <meta name="twitter:description" content="Find all the rhymes! A new puzzle every day." />
-  <meta name="twitter:image" content="https://rhymetime.gg/og-image.png" />
+  <meta name="twitter:image" content="https://rhymetime.xyz/og-image.png" />
   <meta name="apple-mobile-web-app-title" content="Rhyme Time" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -299,7 +299,7 @@
       const share = () => {
         const hintTxt = hintsUsed.length>0 ? ` · ${hintsUsed.length} hint${hintsUsed.length>1?"s":""}` : "";
         const streakTxt = stats.streak>1 ? `\n🔥 ${stats.streak}-day streak` : "";
-        const t = `🃏 Rhyme Time #${pNum}\n🎯 "${puzzle.target.toUpperCase()}"\n📊 ${found.length}/${puzzle.rhymes.length} rhymes · ${pts}/${maxPts} pts${hintTxt}\n${rank.name}${streakTxt}\n\nrhymetime.gg`;
+        const t = `🃏 Rhyme Time #${pNum}\n🎯 "${puzzle.target.toUpperCase()}"\n📊 ${found.length}/${puzzle.rhymes.length} rhymes · ${pts}/${maxPts} pts${hintTxt}\n${rank.name}${streakTxt}\n\nrhymetime.xyz`;
         navigator.clipboard.writeText(t).then(()=>{ setCopied(true); setTimeout(()=>setCopied(false),2500); });
       };
 
