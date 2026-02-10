@@ -140,7 +140,7 @@
       return r;
     }
     function dayNum() { return Math.floor(Date.now() / 86400000); }
-    function seeded(s) { let x = s|0; x=((x>>16)^x)*0x45d9f3b|0; x=((x>>16)^x)*0x45d9f3b|0; return ((x>>16)^x & 0x7fffffff)/0x7fffffff; }
+    function seeded(s) { let x = s|0; x=((x>>16)^x)*0x45d9f3b|0; x=((x>>16)^x)*0x45d9f3b|0; x=(x>>16)^x; return (x & 0x7fffffff)/0x7fffffff; }
     function puzzleForDay(off=0) { const d=dayNum()+off; return PUZZLES[Math.floor(seeded(d+42)*PUZZLES.length)%PUZZLES.length]; }
     function puzzleNumber(off=0) { return Math.max(1, dayNum()+off-EPOCH+1); }
     function dateStr(off=0) { const d=new Date(); d.setDate(d.getDate()+off); return d.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"}); }
@@ -611,4 +611,3 @@
   </script>
 </body>
 </html>
-
