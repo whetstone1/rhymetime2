@@ -152,6 +152,28 @@
     const gameKey = (off=0) => `rt-${dayNum()+off}`;
     const DEF_STATS = { games:0, wins:0, ranks:{}, streak:0, maxStreak:0, lastDay:0 };
 
+    function loadHistory() {
+      const games = [];
+      const today = dayNum();
+      // Scan back up to 100 days
+      for (let i = 1; i <= 100; i++) {
+        const d = today - i;
+        const save = LS.get(`rt-${d}`);
+        if (!save?.found || !save?.target) continue;
+        const p = puzzleForDay(-i);
+        if (!p || p.target !== save.target) continue;
+        const pts = save.found.reduce((a,w)=>a+w.length, 0);
+        const maxPts = p.rhymes.reduce((a,w)=>a+w.length, 0);
+        const missed = p.rhymes.filter(w => !save.found.includes(w));
+        const pn = puzzleNumber(-i);
+        const dt = new Date(); dt.setDate(dt.getDate() - i);
+        const label = dt.toLocaleDateString("en-US",{month:"short",day:"numeric",timeZone:"America/New_York"});
+        games.push({ num: pn, target: p.target, found: save.found, missed, total: p.rhymes.length,
+          pts, maxPts, rank: getRank(pts, maxPts).name, label, done: save.found.length === p.rhymes.length, hints: save.hints?.length || 0 });
+      }
+      return games;
+    }
+
     // ─── LOGO ────────────────────────────────────────────────────────────
     function Logo({ size=40 }) {
       return (
@@ -197,14 +219,15 @@
       help: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 115.12 2.13c-.67.56-1.12 1.2-1.12 1.87v1"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg>,
       hint: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 014 12.7V17H8v-2.3A7 7 0 0112 2z"/></svg>,
       coffee: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M17 8h1a4 4 0 010 8h-1"/><path d="M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>,
+      share: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>,
+      camera: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>,
+      history: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 12a9 9 0 1018 0 9 9 0 00-18 0"/><path d="M3 12H1"/><path d="M12 7v5l3 3"/></svg>,
     };
 
     // ─── MAIN APP ────────────────────────────────────────────────────────
     function RhymeTime() {
       const puzzle = useMemo(() => puzzleForDay(0), []);
-      const yPuzzle = useMemo(() => puzzleForDay(-1), []);
       const pNum = useMemo(() => puzzleNumber(0), []);
-      const yNum = useMemo(() => puzzleNumber(-1), []);
       const maxPts = useMemo(() => puzzle.rhymes.reduce((a,w)=>a+w.length,0), [puzzle]);
 
       const [found, setFound] = useState(() => {
@@ -218,12 +241,10 @@
       const [msgType, setMsgType] = useState("info");
       const [shake, setShake] = useState(false);
       const [modal, setModal] = useState(null);
-      const [copied, setCopied] = useState(false);
+      const [historyGames, setHistoryGames] = useState([]);
+      const [historyDetail, setHistoryDetail] = useState(null);
       const [celebrate, setCelebrate] = useState(null);
       const [stats, setStats] = useState(() => LS.get("rt-stats-v2") || DEF_STATS);
-      const [yFound] = useState(() => {
-        const s=LS.get(gameKey(-1)); return (s?.found && s?.target===yPuzzle.target) ? s.found : [];
-      });
       const inputRef = useRef(null);
       const wordsRef = useRef(null);
       const prevRank = useRef(null);
@@ -268,6 +289,10 @@
         if (wordsRef.current) wordsRef.current.scrollTop = wordsRef.current.scrollHeight;
       }, [found]);
 
+      useEffect(() => {
+        if (modal === "history") { setHistoryGames(loadHistory()); setHistoryDetail(null); }
+      }, [modal]);
+
       const flash = useCallback((t,type="info",dur=2200) => {
         if (msgT.current) clearTimeout(msgT.current);
         setMsg(t); setMsgType(type);
@@ -296,14 +321,259 @@
         inputRef.current?.focus();
       }, [puzzle, found, hintsUsed, hintsLeft, flash]);
 
-      const share = () => {
-        const hintTxt = hintsUsed.length>0 ? ` · ${hintsUsed.length} hint${hintsUsed.length>1?"s":""}` : "";
-        const streakTxt = stats.streak>1 ? `\n🔥 ${stats.streak}-day streak` : "";
-        const t = `🃏 Rhyme Time #${pNum}\n🎯 "${puzzle.target.toUpperCase()}"\n📊 ${found.length}/${puzzle.rhymes.length} rhymes · ${pts}/${maxPts} pts${hintTxt}\n${rank.name}${streakTxt}\n\nrhymetime.xyz`;
-        navigator.clipboard.writeText(t).then(()=>{ setCopied(true); setTimeout(()=>setCopied(false),2500); });
+      // ─── VIRAL SHARE SYSTEM ───
+      const buildGrid = useCallback(() => {
+        const buckets = [{words:[]},{words:[]},{words:[]}];
+        puzzle.rhymes.forEach(w => {
+          if (w.length <= 4) buckets[0].words.push(w);
+          else if (w.length <= 6) buckets[1].words.push(w);
+          else buckets[2].words.push(w);
+        });
+        return buckets.filter(b => b.words.length > 0).map(b => {
+          const f = b.words.filter(w => found.includes(w)).length;
+          const t = b.words.length;
+          const cap = Math.min(t, 12);
+          const filled = Math.round((f / t) * cap);
+          return { found: f, total: t, filled, cap };
+        });
+      }, [puzzle, found]);
+
+      const shareText = () => {
+        const grid = buildGrid();
+        const rows = grid.map(b => "🟨".repeat(b.filled) + "⬛".repeat(b.cap - b.filled));
+        const hintTxt = hintsUsed.length > 0 ? ` (${hintsUsed.length} hint${hintsUsed.length>1?"s":""})` : "";
+        const streakTxt = stats.streak > 1 ? `\n🔥 ${stats.streak}-day streak` : "";
+        const t = `🃏 Rhyme Time #${pNum}\n\n${rows.join("\n")}\n\n${rank.name} · ${found.length}/${puzzle.rhymes.length} rhymes${hintTxt}${streakTxt}\n\nrhymetime.xyz`;
+        if (navigator.share) { navigator.share({ text: t }).catch(()=>{}); }
+        else { navigator.clipboard.writeText(t).then(()=>flash("Copied to clipboard!","ok")); }
       };
 
-      const yMax = yPuzzle.rhymes.reduce((a,w)=>a+w.length,0);
+      const shareImage = useCallback(() => {
+        const W = 1080, H = 1350; // 4:5 Instagram ratio
+        const c = document.createElement("canvas"); c.width = W; c.height = H;
+        const ctx = c.getContext("2d");
+
+        // ─── HELPERS ───
+        const rr = (x,y,w,h,r) => { ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r); ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath(); };
+        const sans = (wt, sz) => `${wt} ${sz}px -apple-system, 'Helvetica Neue', Arial, sans-serif`;
+        const serif = (sz) => `${sz}px Georgia, 'Times New Roman', serif`;
+
+        // ─── BACKGROUND ───
+        ctx.fillStyle = "#15131A"; ctx.fillRect(0, 0, W, H);
+
+        // Warm radial glow
+        const glow = ctx.createRadialGradient(W/2, H*0.35, 0, W/2, H*0.35, 500);
+        glow.addColorStop(0, "rgba(232,185,49,0.08)");
+        glow.addColorStop(0.5, "rgba(105,73,209,0.04)");
+        glow.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+
+        // Subtle noise via tiny dots
+        ctx.fillStyle = "rgba(255,255,255,0.015)";
+        for (let i = 0; i < 3000; i++) {
+          ctx.fillRect(Math.random()*W, Math.random()*H, 1, 1);
+        }
+
+        // ─── CARD ───
+        const cardX = 60, cardY = 50, cardW = W - 120, cardH = H - 100, cardR = 32;
+        // Card shadow
+        ctx.shadowColor = "rgba(0,0,0,0.4)"; ctx.shadowBlur = 60; ctx.shadowOffsetY = 10;
+        ctx.fillStyle = "#1E1C24";
+        rr(cardX, cardY, cardW, cardH, cardR); ctx.fill();
+        ctx.shadowColor = "transparent";
+
+        // Card border (subtle)
+        ctx.strokeStyle = "rgba(255,255,255,0.06)"; ctx.lineWidth = 1;
+        rr(cardX, cardY, cardW, cardH, cardR); ctx.stroke();
+
+        // Inner card gradient (very subtle warm at top)
+        const cardGrad = ctx.createLinearGradient(0, cardY, 0, cardY + 300);
+        cardGrad.addColorStop(0, "rgba(232,185,49,0.03)");
+        cardGrad.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = cardGrad;
+        rr(cardX, cardY, cardW, cardH, cardR); ctx.fill();
+
+        const cx = W / 2;
+
+        // ─── JESTER ICON (drawn as paths) ───
+        ctx.save(); ctx.translate(cx, 160); ctx.scale(1.2, 1.2);
+        // Card shape
+        ctx.fillStyle = "#2A2733";
+        rr(-34, -44, 68, 88, 8); ctx.fill();
+        ctx.strokeStyle = "rgba(232,185,49,0.3)"; ctx.lineWidth = 1;
+        rr(-34, -44, 68, 88, 8); ctx.stroke();
+        // Crown/hat points
+        ctx.fillStyle = "#E8B931";
+        ctx.beginPath(); ctx.moveTo(-12,-20); ctx.lineTo(-18,-38); ctx.lineTo(-4,-28); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(0,-24); ctx.lineTo(0,-42); ctx.lineTo(8,-28); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(12,-20); ctx.lineTo(18,-38); ctx.lineTo(4,-28); ctx.closePath(); ctx.fill();
+        // Face circle
+        ctx.fillStyle = "#3D3750"; ctx.beginPath(); ctx.arc(0,6,16,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#E8B931"; ctx.beginPath(); ctx.arc(0,6,12,0,Math.PI*2); ctx.fill();
+        // Eyes (X X)
+        ctx.strokeStyle = "#1E1C24"; ctx.lineWidth = 2.2; ctx.lineCap = "round";
+        [[-5,3],[5,3]].forEach(([ex,ey]) => {
+          ctx.beginPath(); ctx.moveTo(ex-3,ey-3); ctx.lineTo(ex+3,ey+3); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(ex+3,ey-3); ctx.lineTo(ex-3,ey+3); ctx.stroke();
+        });
+        // Smile
+        ctx.beginPath(); ctx.arc(0, 8, 6, 0.2, Math.PI-0.2); ctx.strokeStyle="#1E1C24"; ctx.lineWidth=2; ctx.stroke();
+        // Corner pips
+        ctx.fillStyle = "#E8B931"; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("♦", -24, -30); ctx.fillText("♦", 24, 36);
+        ctx.restore();
+
+        // ─── HEADER ───
+        ctx.textAlign = "center";
+        ctx.fillStyle = "rgba(232,185,49,0.6)";
+        ctx.font = sans("600", 18);
+        ctx.letterSpacing = "6px";
+        ctx.fillText("R H Y M E   T I M E", cx, 260);
+        ctx.letterSpacing = "0px";
+
+        ctx.fillStyle = "rgba(255,255,255,0.3)";
+        ctx.font = sans("500", 16);
+        ctx.fillText(`Puzzle #${pNum}  ·  ${dateStr()}`, cx, 290);
+
+        // ─── TARGET WORD ───
+        // Glow behind word
+        ctx.shadowColor = "rgba(232,185,49,0.15)"; ctx.shadowBlur = 40;
+        ctx.fillStyle = "#F5F0E8";
+        ctx.font = serif(88);
+        ctx.fillText(puzzle.target, cx, 400);
+        ctx.shadowColor = "transparent";
+
+        // Subtitle
+        ctx.fillStyle = "rgba(255,255,255,0.25)";
+        ctx.font = sans("400", 18);
+        ctx.fillText("find the rhymes", cx, 440);
+
+        // ─── DIVIDER ───
+        const divW = 200;
+        const divGrad = ctx.createLinearGradient(cx - divW/2, 0, cx + divW/2, 0);
+        divGrad.addColorStop(0, "rgba(232,185,49,0)");
+        divGrad.addColorStop(0.5, "rgba(232,185,49,0.3)");
+        divGrad.addColorStop(1, "rgba(232,185,49,0)");
+        ctx.fillStyle = divGrad;
+        ctx.fillRect(cx - divW/2, 465, divW, 1);
+
+        // ─── GRID ───
+        const grid = buildGrid();
+        const sqSize = 52, gap = 7, cornerRad = 10;
+        const gridStartY = 500;
+        const rowLabels = ["short", "medium", "long"];
+
+        grid.forEach((bucket, rowIdx) => {
+          const rowWidth = bucket.cap * (sqSize + gap) - gap;
+          const startX = (W - rowWidth) / 2;
+          const y = gridStartY + rowIdx * (sqSize + gap + 16);
+
+          // Row label
+          ctx.fillStyle = "rgba(255,255,255,0.2)";
+          ctx.font = sans("500", 13);
+          ctx.textAlign = "right";
+          ctx.fillText(rowLabels[rowIdx] || "", startX - 16, y + sqSize/2 + 4);
+          ctx.textAlign = "center";
+
+          for (let i = 0; i < bucket.cap; i++) {
+            const x = startX + i * (sqSize + gap);
+            const isFilled = i < bucket.filled;
+
+            if (isFilled) {
+              // Gold tile with subtle glow
+              ctx.shadowColor = "rgba(232,185,49,0.2)"; ctx.shadowBlur = 8;
+              ctx.fillStyle = "#E8B931";
+              rr(x, y, sqSize, sqSize, cornerRad); ctx.fill();
+              ctx.shadowColor = "transparent";
+              // Inner highlight
+              const tg = ctx.createLinearGradient(x, y, x, y + sqSize);
+              tg.addColorStop(0, "rgba(255,255,255,0.15)");
+              tg.addColorStop(1, "rgba(0,0,0,0.05)");
+              ctx.fillStyle = tg;
+              rr(x, y, sqSize, sqSize, cornerRad); ctx.fill();
+            } else {
+              // Empty tile
+              ctx.fillStyle = "#2A2733";
+              rr(x, y, sqSize, sqSize, cornerRad); ctx.fill();
+              ctx.strokeStyle = "rgba(255,255,255,0.04)"; ctx.lineWidth = 1;
+              rr(x, y, sqSize, sqSize, cornerRad); ctx.stroke();
+            }
+          }
+
+          // Count
+          ctx.fillStyle = "rgba(255,255,255,0.2)";
+          ctx.font = sans("600", 14);
+          ctx.textAlign = "left";
+          ctx.fillText(`${bucket.found}/${bucket.total}`, (W + rowWidth)/2 + 16, y + sqSize/2 + 5);
+          ctx.textAlign = "center";
+        });
+
+        // ─── STATS AREA ───
+        const statsY = gridStartY + grid.length * (sqSize + gap + 16) + 50;
+
+        // Rank badge
+        ctx.font = sans("700", 28);
+        const rankText = rank.name;
+        const rankW = ctx.measureText(rankText).width + 48;
+        ctx.fillStyle = "rgba(232,185,49,0.1)";
+        rr((W-rankW)/2, statsY - 20, rankW, 46, 23); ctx.fill();
+        ctx.strokeStyle = "rgba(232,185,49,0.25)"; ctx.lineWidth = 1;
+        rr((W-rankW)/2, statsY - 20, rankW, 46, 23); ctx.stroke();
+        ctx.fillStyle = "#E8B931";
+        ctx.fillText(rankText, cx, statsY + 10);
+
+        // Score
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.font = sans("500", 22);
+        const hintTxt = hintsUsed.length > 0 ? `  ·  ${hintsUsed.length} hint${hintsUsed.length>1?"s":""}` : "";
+        ctx.fillText(`${found.length} of ${puzzle.rhymes.length} rhymes  ·  ${pts}/${maxPts} pts${hintTxt}`, cx, statsY + 56);
+
+        // Streak
+        if (stats.streak > 1) {
+          ctx.fillStyle = "#E8B931";
+          ctx.font = sans("700", 22);
+          ctx.fillText(`🔥 ${stats.streak}-day streak`, cx, statsY + 96);
+        }
+
+        // ─── PROGRESS BAR ───
+        const barY = statsY + (stats.streak > 1 ? 125 : 90);
+        const barW = 480, barH = 6;
+        ctx.fillStyle = "#2A2733";
+        rr((W-barW)/2, barY, barW, barH, 3); ctx.fill();
+        const fillW = Math.max(0, Math.min(pct/100, 1)) * barW;
+        if (fillW > 2) {
+          const barGrad = ctx.createLinearGradient((W-barW)/2, 0, (W-barW)/2 + fillW, 0);
+          barGrad.addColorStop(0, "#B8A4F8"); barGrad.addColorStop(1, "#E8B931");
+          ctx.fillStyle = barGrad;
+          rr((W-barW)/2, barY, fillW, barH, 3); ctx.fill();
+        }
+
+        // ─── FOOTER ───
+        // Divider
+        ctx.fillStyle = divGrad;
+        ctx.fillRect(cx - divW/2, H - 155, divW, 1);
+
+        ctx.fillStyle = "rgba(255,255,255,0.2)";
+        ctx.font = sans("400", 16);
+        ctx.fillText("A daily word game — new puzzle every day", cx, H - 120);
+
+        ctx.fillStyle = "#E8B931";
+        ctx.font = sans("700", 26);
+        ctx.fillText("rhymetime.xyz", cx, H - 80);
+
+        // ─── EXPORT ───
+        c.toBlob(blob => {
+          const file = new File([blob], `rhymetime-${pNum}.png`, {type:"image/png"});
+          if (navigator.share && navigator.canShare?.({files:[file]})) {
+            navigator.share({ files:[file], text:`🃏 Rhyme Time #${pNum} — rhymetime.xyz` }).catch(()=>{});
+          } else {
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+            a.download = file.name; a.click(); URL.revokeObjectURL(a.href);
+            flash("Image saved!", "ok");
+          }
+        }, "image/png");
+      }, [buildGrid, pNum, puzzle, found, pts, maxPts, rank, pct, hintsUsed, stats, flash]);
+
       const nextRank = RANKS.find(r => r.threshold > pct/100) || RANKS[RANKS.length-1];
       const nextPts = Math.ceil(nextRank.threshold * maxPts);
 
@@ -320,7 +590,7 @@
                 {stats.streak > 0 && <div style={S.streakBadge}>🔥 {stats.streak}</div>}
               </div>
               <nav style={S.nav}>
-                <NavIcon onClick={()=>setModal("yesterday")} title="Yesterday">{Ic.yesterday}</NavIcon>
+                <NavIcon onClick={()=>setModal("history")} title="Past Games">{Ic.history}</NavIcon>
                 <NavIcon onClick={()=>setModal("stats")} title="Stats">{Ic.stats}</NavIcon>
                 <NavIcon onClick={()=>setModal("ranks")} title="Rankings">{Ic.ranks}</NavIcon>
                 <NavIcon onClick={()=>setModal("how")} title="How to Play">{Ic.help}</NavIcon>
@@ -367,8 +637,9 @@
                     {Ic.hint}<span>Hint ({hintsLeft})</span>
                   </button>
                 )}
-                <button style={S.pill} onClick={share}>{copied ? "✓ Copied" : "Share"}</button>
-                {done && <button style={{...S.pill,...S.viewAllPill}} onClick={()=>setModal("answers")}>View All Answers</button>}
+                <button style={S.pill} onClick={shareText}>{Ic.share}<span>Share</span></button>
+                <button style={{...S.pill,...S.imgPill}} onClick={shareImage}>{Ic.camera}<span>Image</span></button>
+                {done && <button style={{...S.pill,...S.viewAllPill}} onClick={()=>setModal("answers")}>View All</button>}
               </div>
             </div>
 
@@ -377,12 +648,27 @@
               <div style={S.wordHeader}>
                 <span style={S.wordCount}>{found.length} of {puzzle.rhymes.length} found</span>
                 {!done && found.length>0 && <span style={S.wordRemain}>{puzzle.rhymes.length-found.length} to go</span>}
+                {done && <span style={{...S.wordRemain, color:"#16A34A", fontWeight:600}}>Complete! 🎉</span>}
               </div>
               {found.length === 0 ? (
-                <div style={S.emptyState}>
-                  <div style={S.emptyIcon}>🃏</div>
-                  <p style={S.emptyText}>Your rhymes appear here</p>
-                  <p style={S.emptySubtext}>{puzzle.rhymes.length} words waiting to be found</p>
+                <div style={S.rulesInline}>
+                  <div style={S.rulesInlineHeader}>
+                    <Logo size={20} />
+                    <span style={{fontWeight:600,color:"#2D2B2E",fontSize:13}}>How to Play</span>
+                  </div>
+                  <div style={S.rulesInlineGrid}>
+                    {[
+                      ["🎯", "Type a rhyming word and press Enter"],
+                      ["📏", "Score points equal to the word's length"],
+                      ["🔤", "Multi-syllable words count too!"],
+                      ["💡", `${MAX_HINTS} hints per puzzle if you're stuck`],
+                    ].map(([ic,txt],i) => (
+                      <div key={i} style={S.rulesInlineRow}>
+                        <span style={{fontSize:13,flexShrink:0}}>{ic}</span>
+                        <span style={{fontSize:12,color:"#78746E",lineHeight:"1.3"}}>{txt}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div style={S.chips}>
@@ -393,6 +679,21 @@
                   ))}
                 </div>
               )}
+
+              {/* ─── MISSED WORDS (shown when game complete or user taps View All) ─── */}
+              {done && (() => {
+                const missed = puzzle.rhymes.filter(w => !found.includes(w));
+                return missed.length > 0 ? (
+                  <div style={S.missedSection}>
+                    <div style={S.missedHeader}>Words you missed ({missed.length})</div>
+                    <div style={S.chips}>
+                      {missed.sort().map(w => (
+                        <span key={w} style={{...S.chip, ...S.missedChip, animation:"none"}}>{w}</span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
             </div>
 
             {/* ─── FOOTER (coffee prominent) ─── */}
@@ -507,31 +808,63 @@
                     </div>
                   </>}
 
-                  {modal==="yesterday" && <>
-                    <h2 style={S.mTitle}>Yesterday's Answers</h2>
-                    <p style={{color:"#A8A4A0",fontSize:12,marginBottom:6}}>Puzzle #{yNum} · {dateStr(-1)}</p>
-                    <div style={{textAlign:"center",margin:"8px 0 14px"}}>
-                      <div style={{fontFamily:"'DM Serif Display', serif",fontSize:30,color:"#2D2B2E",letterSpacing:2}}>{yPuzzle.target}</div>
-                      <p style={{margin:"2px 0 0",fontSize:11,color:"#A8A4A0"}}>{yPuzzle.rhymes.length} words · {yMax} pts</p>
-                    </div>
-                    <div style={S.mChips}>
-                      {[...yPuzzle.rhymes].sort().map(w => {
-                        const f=yFound.includes(w);
-                        return (
-                          <span key={w} style={{...S.chip,background:f?"#ECFDF5":"#FFFBEB",
-                            borderColor:f?"#86EFAC":"#FDE68A",fontWeight:f?600:400,animation:"none"}}>
-                            {f && <span style={{color:"#059669"}}>✓ </span>}{w}
-                          </span>
-                        );
-                      })}
-                    </div>
-                    {yFound.length>0 && <p style={{textAlign:"center",marginTop:12,fontSize:12,color:"#6949D1",fontWeight:600}}>
-                      You found {yFound.length} of {yPuzzle.rhymes.length}
-                    </p>}
-                    <div style={S.mimeBox}>
-                      <Logo size={18} />
-                      <p style={S.mimeText}><em>"Yesterday's done, the answers are shown —<br/>today's fresh puzzle awaits on its throne!"</em></p>
-                    </div>
+                  {modal==="history" && <>
+                    {historyDetail ? <>
+                      {/* ─── DETAIL VIEW ─── */}
+                      <button onClick={()=>setHistoryDetail(null)} style={{background:"none",border:"none",color:"#6949D1",fontSize:12,fontWeight:600,padding:"0 0 8px",display:"flex",alignItems:"center",gap:4,cursor:"pointer"}}>
+                        ← Back to history
+                      </button>
+                      <h2 style={S.mTitle}>Puzzle #{historyDetail.num} — "{historyDetail.target}"</h2>
+                      <p style={{color:"#A8A4A0",fontSize:12,marginBottom:8}}>{historyDetail.label} · {historyDetail.rank} · {historyDetail.pts}/{historyDetail.maxPts} pts{historyDetail.hints > 0 ? ` · ${historyDetail.hints} hint${historyDetail.hints>1?"s":""}` : ""}</p>
+
+                      {historyDetail.found.length > 0 && <>
+                        <p style={{fontSize:11,fontWeight:600,color:"#16A34A",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.5px"}}>Found ({historyDetail.found.length})</p>
+                        <div style={S.mChips}>
+                          {historyDetail.found.sort().map(w => (
+                            <span key={w} style={{...S.chip,background:"#ECFDF5",borderColor:"#86EFAC",animation:"none"}}>✓ {w}</span>
+                          ))}
+                        </div>
+                      </>}
+
+                      {historyDetail.missed.length > 0 && <>
+                        <p style={{fontSize:11,fontWeight:600,color:"#DC2626",marginTop:12,marginBottom:4,textTransform:"uppercase",letterSpacing:"0.5px"}}>Missed ({historyDetail.missed.length})</p>
+                        <div style={S.mChips}>
+                          {historyDetail.missed.sort().map(w => (
+                            <span key={w} style={{...S.chip,background:"#FEF2F2",borderColor:"#FECACA",animation:"none"}}>✗ {w}</span>
+                          ))}
+                        </div>
+                      </>}
+                    </> : <>
+                      {/* ─── LIST VIEW ─── */}
+                      <h2 style={S.mTitle}>Past Games</h2>
+                      {historyGames.length === 0 ? (
+                        <div style={{textAlign:"center",padding:"24px 0",color:"#A8A4A0"}}>
+                          <p style={{fontSize:13}}>No past games yet!</p>
+                          <p style={{fontSize:11,marginTop:4}}>Come back tomorrow to see today's results here.</p>
+                        </div>
+                      ) : (
+                        <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                          {historyGames.map(g => (
+                            <button key={g.num} onClick={()=>setHistoryDetail(g)} style={S.historyRow}>
+                              <div style={{display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0}}>
+                                <span style={{fontSize:11,color:"#A8A4A0",minWidth:38}}>#{g.num}</span>
+                                <span style={{fontFamily:"'DM Serif Display', serif",fontSize:16,color:"#2D2B2E",fontWeight:400}}>{g.target}</span>
+                                <span style={{fontSize:11,color:g.done?"#16A34A":"#A8A4A0",fontWeight:g.done?600:400}}>{g.found.length}/{g.total}</span>
+                              </div>
+                              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                                <span style={{fontSize:10,color:"#6949D1",fontWeight:600}}>{g.rank}</span>
+                                <span style={{fontSize:10,color:"#A8A4A0"}}>{g.label}</span>
+                                <span style={{color:"#D1CEC8",fontSize:11}}>›</span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <div style={S.mimeBox}>
+                        <Logo size={18} />
+                        <p style={S.mimeText}><em>"The rhymes you've found, the ones you've missed —<br/>each puzzle played adds to your list!"</em></p>
+                      </div>
+                    </>}
                   </>}
                 </div>
               </div>
@@ -571,6 +904,7 @@
       actions: { display:"flex", justifyContent:"center", gap:6, flexWrap:"wrap" },
       pill: { padding:"5px 13px", fontSize:11, fontWeight:600, borderRadius:99, border:"1.5px solid #E0DDD8", background:"#fff", color:"#78746E", fontFamily:"'DM Sans', sans-serif", display:"inline-flex", alignItems:"center", gap:4, transition:"all 0.15s" },
       hintPill: { borderColor:"#DDD6FE", color:"#6949D1", background:"#F8F6FF" },
+      imgPill: { borderColor:"#D1FAE5", color:"#065F46", background:"#F0FDF9" },
       viewAllPill: { background:"#6949D1", color:"#fff", borderColor:"#6949D1" },
 
       // Found words — scrollable middle
@@ -582,6 +916,14 @@
       emptyIcon: { fontSize:32, opacity:0.3, marginBottom:4 },
       emptyText: { fontSize:13, color:"#A8A4A0", fontWeight:500 },
       emptySubtext: { fontSize:11, color:"#C4C0BB" },
+      rulesInline: { padding:"16px 14px" },
+      rulesInlineHeader: { display:"flex", alignItems:"center", gap:8, marginBottom:10, paddingBottom:8, borderBottom:"1px solid #F5F4F2" },
+      rulesInlineGrid: { display:"flex", flexDirection:"column", gap:6 },
+      rulesInlineRow: { display:"flex", alignItems:"flex-start", gap:8 },
+      missedSection: { borderTop:"1px dashed #E0DDD8", margin:"4px 12px 0", padding:"10px 0 6px" },
+      missedHeader: { fontSize:11, fontWeight:600, color:"#DC2626", marginBottom:6, textTransform:"uppercase", letterSpacing:"0.5px" },
+      missedChip: { background:"#FEF2F2", borderColor:"#FECACA", color:"#991B1B" },
+      historyRow: { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 12px", borderRadius:10, border:"1px solid #EDECEA", background:"#fff", fontFamily:"'DM Sans', sans-serif", cursor:"pointer", transition:"all 0.15s", width:"100%" },
       chips: { padding:"10px 12px", display:"flex", flexWrap:"wrap", gap:5 },
       chip: { padding:"4px 10px", borderRadius:99, fontSize:12, fontWeight:500, background:"#F8F6FF", color:"#3B1F8E", border:"1px solid #E9E5F5", display:"inline-flex", alignItems:"center", gap:4, animation:"popIn 0.2s ease both" },
       chipPt: { fontSize:9, color:"#A78BFA", fontWeight:700 },
